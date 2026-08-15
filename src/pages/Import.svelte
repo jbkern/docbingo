@@ -18,7 +18,7 @@
   let aiMulti = false;
   let extraTags = '';          // tags ajoutés à toutes les questions importées
 
-  onMount(async () => { aiEnabled = (await api.get('/api/ai/status')).enabled; });
+  onMount(async () => { if (/#\/import\/ai/.test(location.hash)) mode = 'ai'; aiEnabled = (await api.get('/api/ai/status')).enabled; });
 
   async function parse() {
     error = ''; result = null; busy = true;

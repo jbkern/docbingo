@@ -65,6 +65,7 @@
   <h1 class="grow">{$t('questions.title')} <span class="muted">({questions.length})</span></h1>
   <button class="btn secondary" on:click={() => (showTrash = !showTrash)} title={$t('trash.title')}>🗑 {$t('trash.title')} {#if trash.length}<span class="cnt">{trash.length}</span>{/if}</button>
   <a class="btn secondary" href="#/import">⬆ {$t('nav.import')}</a>
+  <a class="btn secondary" href="#/import/ai">✨ {$t('import.ai')}</a>
   <a class="btn" href="#/question/new">＋ {$t('questions.new')}</a>
 </div>
 

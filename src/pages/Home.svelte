@@ -39,6 +39,7 @@
     <a class="btn" href="#/session-new">＋ {$t('sessions.new')}</a>
     <a class="btn secondary" href="#/question/new">＋ {$t('questions.new')}</a>
     <a class="btn secondary" href="#/import">⬆ {$t('nav.import')}</a>
+    <a class="btn secondary" href="#/import/ai">✨ {$t('import.ai')}</a>
   </div>
 </div>
 
