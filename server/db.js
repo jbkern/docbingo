@@ -133,6 +133,23 @@ export async function initSchema() {
     answered INTEGER DEFAULT 0,
     correct INTEGER DEFAULT 0
   )`);
+  /* Sprint 3 : comptes, flux éditorial */
+  await db.execute(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'author',   -- admin | author
+    pass_hash TEXT NOT NULL,               -- scrypt: salt:hex
+    active INTEGER DEFAULT 1,
+    must_change INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_login TEXT
+  )`);
+  await addCol('questions', 'author_id', 'INTEGER');
+  await addCol('questions', 'status', "TEXT DEFAULT 'published'");   // draft | proposed | published
+  await addCol('questions', 'review_note', 'TEXT');
+  await addCol('sessions', 'owner_id', 'INTEGER');
+  await addCol('sessions', 'thematic_rows', "TEXT");                 // JSON: [tag par ligne] si grilles thématiques
   await db.execute(`CREATE TABLE IF NOT EXISTS remote_codes (
     session_id INTEGER PRIMARY KEY,
     code TEXT NOT NULL,

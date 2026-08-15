@@ -8,6 +8,8 @@
   let q = { statement: '', options: ['', '', '', ''], correct: [], image: null, explanation: '', tags: [], difficulty: 2, caseId: null, caseOrder: 0 };
   let allTags = [];
   let cases = [];
+  let me = { role: 'admin' };
+  let saveAs = null; // 'draft' | 'proposed' | 'published' 
   let newCaseTitle = '';
   async function createCase() {
     if (!newCaseTitle.trim()) return;
@@ -21,7 +23,7 @@
   let isNew = true;
 
   onMount(async () => {
-    [allTags, cases] = await Promise.all([api.get('/api/tags'), api.get('/api/cases')]);
+    [allTags, cases, me] = await Promise.all([api.get('/api/tags'), api.get('/api/cases'), api.get('/api/me')]);
     if (id && id !== 'new') {
       isNew = false;
       q = await api.get('/api/questions/' + id);
@@ -69,7 +71,7 @@
     error = '';
     saving = true;
     try {
-      const trimmed = { ...q, options: q.options.filter(o => o.trim()) };
+      const trimmed = { ...q, options: q.options.filter(o => o.trim()), status: saveAs || (me.role === 'admin' ? 'published' : 'proposed') };
       // remap correct indexes after removing empty options
       const kept = q.options.map((o, i) => o.trim() ? i : null).filter(i => i !== null);
       trimmed.correct = q.correct.filter(c => kept.includes(c)).map(c => kept.indexOf(c));
@@ -196,9 +198,17 @@
     {/if}
   </div>
 
+  {#if q.reviewNote && q.status === 'draft'}
+    <div class="alert warn">↩ {$t('review.returned')} : « {q.reviewNote} »</div>
+  {/if}
   <div class="row" style="justify-content:flex-end; gap:10px">
     <a class="btn secondary" href="#/questions">{$t('common.cancel')}</a>
-    <button class="btn" on:click={save} disabled={saving}>{$t('common.save')}</button>
+    <button class="btn secondary" on:click={() => { saveAs = 'draft'; save(); }} disabled={saving}>💾 {$t('status.draftsave')}</button>
+    {#if me.role === 'admin'}
+      <button class="btn" on:click={() => { saveAs = 'published'; save(); }} disabled={saving}>✓ {$t('status.publish')}</button>
+    {:else}
+      <button class="btn" on:click={() => { saveAs = 'proposed'; save(); }} disabled={saving}>📨 {$t('status.propose')}</button>
+    {/if}
   </div>
 </div>
 

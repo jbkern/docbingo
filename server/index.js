@@ -12,34 +12,94 @@ app.use(express.json({ limit: '4mb' }));
 
 await initSchema();
 
-/* ---------- Keep-alive (Render free : évite l'endormissement pendant l'utilisation) ---------- */
-app.get('/api/ping', (req, res) => res.json({ ok: true, at: Date.now() }));
-
-/* ---------- Auth (simple password, active only if DOCBINGO_PASSWORD is set) ---------- */
-const PASSWORD = process.env.DOCBINGO_PASSWORD || null;
-/* Jeton sans état (dérivé du mot de passe) : survit aux redémarrages du serveur,
-   l'utilisateur n'a pas à se reconnecter après chaque réveil de l'hébergement. */
-const SESSION_TOKEN = PASSWORD ? crypto.createHmac('sha256', 'docbingo-session').update(PASSWORD).digest('hex') : null;
-const safeEqual = (a, b) => typeof a === 'string' && a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
-app.post('/api/login', (req, res) => {
-  if (!PASSWORD) return res.json({ ok: true, token: null });
-  if (typeof req.body?.password === 'string' && safeEqual(req.body.password, PASSWORD)) {
-    return res.json({ ok: true, token: SESSION_TOKEN });
-  }
-  res.status(401).json({ ok: false });
-});
-app.use('/api', (req, res, next) => {
-  if (!PASSWORD || req.path === '/login' || req.path === '/ping' || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
-  const token = req.headers['x-docbingo-token'];
-  if (token && safeEqual(String(token), SESSION_TOKEN)) return next();
-  res.status(401).json({ error: 'auth_required' });
-});
-
 /* Wrapper: route async avec gestion d'erreur */
 const h = (fn) => (req, res) => fn(req, res).catch(e => {
   console.error(e);
   if (!res.headersSent) res.status(500).json({ error: 'Erreur serveur' });
 });
+
+/* ---------- Keep-alive (Render free : évite l'endormissement pendant l'utilisation) ---------- */
+app.get('/api/ping', (req, res) => res.json({ ok: true, at: Date.now() }));
+
+/* ---------- Auth : comptes utilisateurs (email + mot de passe), jetons signés ----------
+   Migration douce : au premier démarrage, un compte admin est créé à partir de DOCBINGO_PASSWORD
+   (email ADMIN_EMAIL ou admin@docbingo.local). Sans DOCBINGO_PASSWORD ni utilisateur → accès libre (dev). */
+const SECRET = process.env.DOCBINGO_SECRET || crypto.createHash('sha256').update('docbingo:' + (process.env.DOCBINGO_PASSWORD || 'dev')).digest('hex');
+const hashPw = (pw, salt = crypto.randomBytes(16).toString('hex')) => salt + ':' + crypto.scryptSync(pw, salt, 32).toString('hex');
+const checkPw = (pw, stored) => { const [salt, hex] = String(stored).split(':'); if (!salt || !hex) return false; const h = crypto.scryptSync(pw, salt, 32).toString('hex'); return h.length === hex.length && crypto.timingSafeEqual(Buffer.from(h), Buffer.from(hex)); };
+const sign = (payload) => { const body = Buffer.from(JSON.stringify(payload)).toString('base64url'); return body + '.' + crypto.createHmac('sha256', SECRET).update(body).digest('base64url'); };
+const verify = (token) => { try { const [body, sig] = String(token).split('.'); const good = crypto.createHmac('sha256', SECRET).update(body).digest('base64url'); if (sig?.length !== good.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(good))) return null; return JSON.parse(Buffer.from(body, 'base64url').toString()); } catch { return null; } };
+
+async function ensureAdmin() {
+  const n = (await get('SELECT COUNT(*) AS c FROM users')).c;
+  if (n === 0 && process.env.DOCBINGO_PASSWORD) {
+    const email = (process.env.ADMIN_EMAIL || 'admin@docbingo.local').toLowerCase();
+    await run('INSERT INTO users (email, name, role, pass_hash) VALUES (?, ?, ?, ?)', [email, process.env.ADMIN_NAME || 'Administrateur', 'admin', hashPw(process.env.DOCBINGO_PASSWORD)]);
+    console.log('Compte admin initial créé :', email);
+  }
+}
+await ensureAdmin();
+async function authEnabled() { return (await get('SELECT COUNT(*) AS c FROM users WHERE active = 1')).c > 0; }
+async function userFromReq(req) {
+  const t = req.headers['x-docbingo-token']; if (!t) return null;
+  const p = verify(t); if (!p?.uid) return null;
+  const u = await get('SELECT id, email, name, role, active, must_change FROM users WHERE id = ?', [p.uid]);
+  return u && u.active ? u : null;
+}
+app.get('/api/auth/mode', h(async (req, res) => res.json({ accounts: await authEnabled() })));
+app.post('/api/login', h(async (req, res) => {
+  if (!(await authEnabled())) return res.json({ ok: true, token: null, user: { name: 'Invité', role: 'admin' } });
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  const pw = String(req.body?.password || '');
+  // compatibilité : connexion avec le seul mot de passe (ancien écran) → admin si mot de passe global
+  let u = email ? await get('SELECT * FROM users WHERE email = ? AND active = 1', [email]) : null;
+  if (!u && !email && process.env.DOCBINGO_PASSWORD && pw === process.env.DOCBINGO_PASSWORD) u = await get("SELECT * FROM users WHERE role = 'admin' AND active = 1 ORDER BY id LIMIT 1");
+  if (!u || !checkPw(pw, u.pass_hash)) return res.status(401).json({ ok: false });
+  await run("UPDATE users SET last_login = datetime('now') WHERE id = ?", [u.id]);
+  res.json({ ok: true, token: sign({ uid: u.id, r: u.role, t: Date.now() }), user: { id: u.id, email: u.email, name: u.name, role: u.role, mustChange: !!u.must_change } });
+}));
+app.use('/api', async (req, res, next) => {
+  if (req.path === '/login' || req.path === '/ping' || req.path === '/auth/mode' || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
+  if (!(await authEnabled())) { req.user = { id: null, name: 'Invité', role: 'admin' }; return next(); }
+  const u = await userFromReq(req);
+  if (!u) return res.status(401).json({ error: 'auth_required' });
+  req.user = u; next();
+});
+const adminOnly = (req, res, next) => (req.user?.role === 'admin' ? next() : res.status(403).json({ error: 'admin_only' }));
+
+app.get('/api/me', (req, res) => res.json(req.user));
+app.post('/api/me/password', h(async (req, res) => {
+  const { current, next: np } = req.body || {};
+  const u = await get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+  if (!u || !checkPw(String(current || ''), u.pass_hash)) return res.status(400).json({ error: 'bad_current' });
+  if (String(np || '').length < 8) return res.status(400).json({ error: 'too_short' });
+  await run('UPDATE users SET pass_hash = ?, must_change = 0 WHERE id = ?', [hashPw(np), u.id]);
+  res.json({ ok: true });
+}));
+/* Gestion des comptes (admin) */
+app.get('/api/users', adminOnly, h(async (req, res) => res.json(await all('SELECT id, email, name, role, active, must_change, created_at, last_login, (SELECT COUNT(*) FROM questions q WHERE q.author_id = users.id) AS questions FROM users ORDER BY role, name'))));
+app.post('/api/users', adminOnly, h(async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim(); const name = String(req.body?.name || '').trim();
+  const role = req.body?.role === 'admin' ? 'admin' : 'author';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !name) return res.status(400).json({ error: 'invalid' });
+  if (await get('SELECT id FROM users WHERE email = ?', [email])) return res.status(400).json({ error: 'exists' });
+  const temp = req.body?.password || crypto.randomBytes(6).toString('base64url');
+  const info = await run('INSERT INTO users (email, name, role, pass_hash, must_change) VALUES (?, ?, ?, ?, 1)', [email, name, role, hashPw(temp)]);
+  res.json({ id: info.lastInsertRowid, email, name, role, tempPassword: temp });
+}));
+app.put('/api/users/:id', adminOnly, h(async (req, res) => {
+  const u = await get('SELECT * FROM users WHERE id = ?', [req.params.id]);
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  const name = req.body?.name !== undefined ? String(req.body.name).trim() : u.name;
+  const role = req.body?.role ? (req.body.role === 'admin' ? 'admin' : 'author') : u.role;
+  const active = req.body?.active !== undefined ? (req.body.active ? 1 : 0) : u.active;
+  if (u.id === req.user.id && (role !== 'admin' || !active)) return res.status(400).json({ error: 'self' });
+  await run('UPDATE users SET name = ?, role = ?, active = ? WHERE id = ?', [name, role, active, u.id]);
+  let tempPassword = null;
+  if (req.body?.resetPassword) { tempPassword = crypto.randomBytes(6).toString('base64url'); await run('UPDATE users SET pass_hash = ?, must_change = 1 WHERE id = ?', [hashPw(tempPassword), u.id]); }
+  res.json({ ok: true, tempPassword });
+}));
+
 
 /* ---------- Helpers ---------- */
 const j = (s, fb) => { try { return JSON.parse(s); } catch { return fb; } };
@@ -54,12 +114,19 @@ async function rowToQuestion(row) {
     options: j(row.options, []), correct: j(row.correct, []),
     image: row.image, explanation: row.explanation, lang: row.lang,
     difficulty: row.difficulty ?? 2, caseId: row.case_id ?? null, caseOrder: row.case_order ?? 0,
+    status: row.status || 'published', authorId: row.author_id ?? null, authorName: row.author_name ?? null, reviewNote: row.review_note ?? null,
     usedCount: row.used_count, createdAt: row.created_at, updatedAt: row.updated_at, tags
   };
 }
-async function allQuestions() {
-  const rows = await all('SELECT * FROM questions ORDER BY updated_at DESC');
+const Q_SELECT = 'SELECT q.*, u.name AS author_name FROM questions q LEFT JOIN users u ON u.id = q.author_id';
+async function allQuestions(onlyPublished = false) {
+  const rows = await all(Q_SELECT + (onlyPublished ? " WHERE COALESCE(q.status, 'published') = 'published'" : '') + ' ORDER BY q.updated_at DESC');
   return Promise.all(rows.map(rowToQuestion));
+}
+async function getQuestion(id) { return rowToQuestion(await get(Q_SELECT + ' WHERE q.id = ?', [id])); }
+function statusForCreate(user, wanted) {
+  if (user.role === 'admin') return wanted === 'draft' ? 'draft' : 'published';
+  return wanted === 'draft' ? 'draft' : 'proposed';
 }
 
 async function setQuestionTags(questionId, tags) {
@@ -94,8 +161,11 @@ function similarity(a, b) {
 
 /* ---------- Questions ---------- */
 app.get('/api/questions', h(async (req, res) => {
-  const { search = '', tags = '', logic = 'or', difficulty = '', caseId = '' } = req.query;
+  const { search = '', tags = '', logic = 'or', difficulty = '', caseId = '', status = '', mine = '' } = req.query;
   let rows = await allQuestions();
+  if (req.user.role !== 'admin') rows = rows.filter(q => q.status === 'published' || q.authorId === req.user.id);
+  if (status) rows = rows.filter(q => q.status === status);
+  if (mine) rows = rows.filter(q => q.authorId === req.user.id);
   if (difficulty) rows = rows.filter(q => String(q.difficulty) === String(difficulty));
   if (caseId) rows = rows.filter(q => String(q.caseId) === String(caseId));
   if (search) {
@@ -115,7 +185,8 @@ app.get('/api/questions', h(async (req, res) => {
 }));
 
 app.get('/api/questions/:id', h(async (req, res) => {
-  const q = await rowToQuestion(await get('SELECT * FROM questions WHERE id = ?', [req.params.id]));
+  const q = await getQuestion(req.params.id);
+  if (q && req.user.role !== 'admin' && q.status !== 'published' && q.authorId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
   q ? res.json(q) : res.status(404).json({ error: 'not_found' });
 }));
 
@@ -132,28 +203,51 @@ app.post('/api/questions', h(async (req, res) => {
   const b = req.body;
   const err = validateQuestion(b);
   if (err) return res.status(400).json({ error: err });
+  const status = statusForCreate(req.user, b.status);
   const info = await run(
-    'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image || null, b.explanation || null, b.lang || 'fr',
-     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0]);
+     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, status]);
   await setQuestionTags(info.lastInsertRowid, b.tags);
-  res.json(await rowToQuestion(await get('SELECT * FROM questions WHERE id = ?', [info.lastInsertRowid])));
+  res.json(await getQuestion(info.lastInsertRowid));
 }));
 
 app.put('/api/questions/:id', h(async (req, res) => {
   const b = req.body;
   const err = validateQuestion(b);
   if (err) return res.status(400).json({ error: err });
+  const cur = await getQuestion(req.params.id);
+  if (!cur) return res.status(404).json({ error: 'not_found' });
+  if (req.user.role !== 'admin' && cur.authorId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  // auteur : une question publiée modifiée repasse en "proposée" ; brouillon → proposée si demandé
+  let status = cur.status;
+  if (req.user.role === 'admin') status = b.status === 'draft' ? 'draft' : (b.status === 'proposed' ? 'proposed' : 'published');
+  else status = b.status === 'draft' ? 'draft' : 'proposed';
   const r = await run(
-    `UPDATE questions SET statement=?, options=?, correct=?, image=?, explanation=?, lang=?, difficulty=?, case_id=?, case_order=?, updated_at=datetime('now') WHERE id=?`,
+    `UPDATE questions SET statement=?, options=?, correct=?, image=?, explanation=?, lang=?, difficulty=?, case_id=?, case_order=?, status=?, updated_at=datetime('now') WHERE id=?`,
     [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image || null, b.explanation || null, b.lang || 'fr',
-     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.params.id]);
+     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, status, req.params.id]);
   if (!r.changes) return res.status(404).json({ error: 'not_found' });
   await setQuestionTags(Number(req.params.id), b.tags);
-  res.json(await rowToQuestion(await get('SELECT * FROM questions WHERE id = ?', [req.params.id])));
+  res.json(await getQuestion(req.params.id));
+}));
+
+/* Validation éditoriale (admin) */
+app.get('/api/review/pending', h(async (req, res) => {
+  if (req.user.role !== 'admin') return res.json({ count: 0 });
+  res.json({ count: (await get("SELECT COUNT(*) AS c FROM questions WHERE status = 'proposed'")).c });
+}));
+app.post('/api/questions/:id/review', adminOnly, h(async (req, res) => {
+  const action = req.body?.action; const note = String(req.body?.note || '').slice(0, 500) || null;
+  if (!['publish', 'return'].includes(action)) return res.status(400).json({ error: 'bad_action' });
+  await run(`UPDATE questions SET status = ?, review_note = ?, updated_at = datetime('now') WHERE id = ?`, [action === 'publish' ? 'published' : 'draft', note, req.params.id]);
+  res.json(await getQuestion(req.params.id));
 }));
 
 app.delete('/api/questions/:id', h(async (req, res) => {
+  const cur = await getQuestion(req.params.id);
+  if (!cur) return res.status(404).json({ error: 'not_found' });
+  if (req.user.role !== 'admin' && (cur.authorId !== req.user.id || cur.status === 'published')) return res.status(403).json({ error: 'forbidden' });
   await run('DELETE FROM questions WHERE id = ?', [req.params.id]);
   await run('DELETE FROM question_tags WHERE question_id = ?', [req.params.id]);
   await run('DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM question_tags)');
@@ -161,13 +255,13 @@ app.delete('/api/questions/:id', h(async (req, res) => {
 }));
 
 app.post('/api/questions/:id/duplicate', h(async (req, res) => {
-  const q = await rowToQuestion(await get('SELECT * FROM questions WHERE id = ?', [req.params.id]));
+  const q = await getQuestion(req.params.id);
   if (!q) return res.status(404).json({ error: 'not_found' });
   const info = await run(
-    'INSERT INTO questions (statement, options, correct, image, explanation, lang) VALUES (?, ?, ?, ?, ?, ?)',
-    [q.statement + ' (copie)', JSON.stringify(q.options), JSON.stringify(q.correct), q.image, q.explanation, q.lang]);
+    'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [q.statement + ' (copie)', JSON.stringify(q.options), JSON.stringify(q.correct), q.image, q.explanation, q.lang, q.difficulty, req.user.id, statusForCreate(req.user, 'draft')]);
   await setQuestionTags(info.lastInsertRowid, q.tags);
-  res.json(await rowToQuestion(await get('SELECT * FROM questions WHERE id = ?', [info.lastInsertRowid])));
+  res.json(await getQuestion(info.lastInsertRowid));
 }));
 
 app.post('/api/questions/check-duplicate', h(async (req, res) => {
@@ -320,9 +414,9 @@ app.post('/api/import/commit', h(async (req, res) => {
   for (const b of list) {
     if (validateQuestion(b) || existing.has(b.statement.trim().toLowerCase())) { skipped++; continue; }
     const info = await run(
-      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), null, b.explanation || null, b.lang || 'fr',
-       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0]);
+      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image || null, b.explanation || null, b.lang || 'fr',
+       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, statusForCreate(req.user, req.body?.status)]);
     await setQuestionTags(info.lastInsertRowid, b.tags);
     existing.add(b.statement.trim().toLowerCase());
     created++;
@@ -333,7 +427,7 @@ app.post('/api/import/commit', h(async (req, res) => {
 /* ---------- Génération IA (clé stockée côté serveur dans settings, ou env ANTHROPIC_API_KEY) ---------- */
 async function aiKey() { return process.env.ANTHROPIC_API_KEY || (await getSetting('ai', {})).key || null; }
 app.get('/api/ai/status', h(async (req, res) => res.json({ enabled: !!(await aiKey()) })));
-app.put('/api/ai/key', h(async (req, res) => {
+app.put('/api/ai/key', adminOnly, h(async (req, res) => {
   const key = String(req.body?.key || '').trim();
   await setSetting('ai', key ? { key } : {});
   res.json({ enabled: !!(await aiKey()) });
@@ -676,6 +770,42 @@ app.get('/api/sessions/:id/stats', h(async (req, res) => {
   res.json({ total: s.grids.length, bingoNow, oneAway, askedCount, participants: nP, perQuestion: perQ.map(x => ({ q: x.q_index, answered: x.n, correct: x.c })) });
 }));
 
+/* ---------- Collections : export / import (partage entre instances) ---------- */
+app.get('/api/collections/export', h(async (req, res) => {
+  const tags = String(req.query.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  let qs = await allQuestions(true);
+  if (tags.length) qs = qs.filter(q => tags.some(t => q.tags.includes(t)));
+  const images = {};
+  for (const q of qs) if (q.image && !images[q.image]) { const im = await get('SELECT mime, data FROM images WHERE name = ?', [q.image]); if (im) images[q.image] = { mime: im.mime, data: Buffer.from(im.data).toString('base64') }; }
+  const cases = {}; for (const q of qs) if (q.caseId && !cases[q.caseId]) { const c = await get('SELECT * FROM clinical_cases WHERE id = ?', [q.caseId]); if (c) cases[q.caseId] = { title: c.title, intro: c.intro }; }
+  res.setHeader('Content-Disposition', `attachment; filename="docbingo-collection-${tags.join('-') || 'complete'}.json"`);
+  res.json({ format: 'docbingo-collection', version: 1, exportedAt: new Date().toISOString(), tags, count: qs.length,
+    questions: qs.map(q => ({ statement: q.statement, options: q.options, correct: q.correct, explanation: q.explanation, tags: q.tags, difficulty: q.difficulty, lang: q.lang, image: q.image, caseKey: q.caseId ? String(q.caseId) : null, caseOrder: q.caseOrder })),
+    cases, images });
+}));
+const collUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 40 * 1024 * 1024 } });
+app.post('/api/collections/import', collUpload.single('file'), h(async (req, res) => {
+  let data; try { data = JSON.parse(req.file.buffer.toString('utf8')); } catch { return res.status(400).json({ error: 'invalid_json' }); }
+  if (data?.format !== 'docbingo-collection' || !Array.isArray(data.questions)) return res.status(400).json({ error: 'not_a_collection' });
+  const existing = new Set((await all('SELECT statement FROM questions')).map(r => r.statement.trim().toLowerCase()));
+  const caseMap = {};
+  for (const [key, c] of Object.entries(data.cases || {})) { const info = await run('INSERT INTO clinical_cases (title, intro) VALUES (?, ?)', [c.title, c.intro || null]); caseMap[key] = info.lastInsertRowid; }
+  const imgMap = {};
+  for (const [name, im] of Object.entries(data.images || {})) { const nn = Date.now() + '-' + Math.round(Math.random() * 1e6) + path.extname(name); await run('INSERT INTO images (name, mime, data) VALUES (?, ?, ?)', [nn, im.mime, Buffer.from(im.data, 'base64')]); imgMap[name] = nn; }
+  let created = 0, skipped = 0;
+  const status = statusForCreate(req.user, req.body?.status);
+  for (const b of data.questions) {
+    if (validateQuestion(b) || existing.has(b.statement.trim().toLowerCase())) { skipped++; continue; }
+    const info = await run(
+      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image ? imgMap[b.image] || null : null, b.explanation || null, b.lang || 'fr',
+       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseKey ? caseMap[b.caseKey] || null : null, Number(b.caseOrder) || 0, req.user.id, status]);
+    await setQuestionTags(info.lastInsertRowid, b.tags);
+    existing.add(b.statement.trim().toLowerCase()); created++;
+  }
+  res.json({ created, skipped, cases: Object.keys(caseMap).length, images: Object.keys(imgMap).length });
+}));
+
 /* ---------- Export ---------- */
 app.get('/api/export', h(async (req, res) => {
   const questions = await allQuestions();
@@ -724,7 +854,7 @@ function shuffle(a) {
 }
 
 async function filteredPool(params) {
-  let pool = await allQuestions();
+  let pool = await allQuestions(true);
   const wanted = (params.tags || []).map(t => t.trim().toLowerCase()).filter(Boolean);
   if (wanted.length) {
     pool = pool.filter(q => (params.tagLogic || params.logic) === 'and'
@@ -739,12 +869,12 @@ async function filteredPool(params) {
 
 /* Sélection des questions d'une session : respecte les cas cliniques (bloc consécutif, dans l'ordre)
    et le mode de difficulté ('any' | 'progressive' | 'balanced' | '1'|'2'|'3'). */
-function pickSessionQuestions(pool, N, difficultyMode = 'any') {
+function pickSessionQuestions(pool, N, difficultyMode = 'any', doShuffle = true) {
   // grouper par cas clinique
   const cases = new Map(); const singles = [];
   for (const q of pool) { if (q.caseId) { if (!cases.has(q.caseId)) cases.set(q.caseId, []); cases.get(q.caseId).push(q); } else singles.push(q); }
   const units = [...cases.values()].map(g => g.sort((a, b) => a.caseOrder - b.caseOrder)).concat(singles.map(q => [q]));
-  shuffle(units);
+  if (doShuffle) shuffle(units);
   let chosen = [];
   if (difficultyMode === 'balanced') {
     // ~ 1/3 de chaque niveau si possible : ordonner les unités par niveau moyen puis piocher en alternance
@@ -780,6 +910,12 @@ app.post('/api/sessions/plan', h(async (req, res) => {
   if (pool.length < N) alerts.push({ type: 'not_enough_questions', available: pool.length, needed: N });
   const incomplete = pool.filter(q => q.options.filter(o => o?.trim()).length < 2 || !q.correct.length);
   if (incomplete.length) alerts.push({ type: 'incomplete_questions', ids: incomplete.map(q => q.id) });
+  if (Array.isArray(req.body.thematicTags) && req.body.thematicTags.length) {
+    for (const t of req.body.thematicTags) {
+      const n = pool.filter(q => q.tags.includes(String(t).toLowerCase())).length;
+      if (n < 3) alerts.push({ type: 'thematic_tag_short', tag: t, available: n });
+    }
+  }
   const successRate = marking === 'correct' ? 0.7 : 1;
   const sims = {};
   for (const k of [3, 4, 5]) {
@@ -805,7 +941,7 @@ async function rowToSession(row, withDetails = false) {
     questionOrder: j(row.question_order, []), currentIndex: row.current_index,
     state: j(row.state, {}), createdAt: row.created_at, startedAt: row.started_at, finishedAt: row.finished_at,
     slides: j(row.slides, []),
-    joinCode: row.join_code || null,
+    joinCode: row.join_code || null, thematicRows: j(row.thematic_rows, null), ownerId: row.owner_id ?? null,
     gridCount: (await get('SELECT COUNT(*) AS c FROM grids WHERE session_id = ?', [row.id])).c
   };
   if (withDetails) {
@@ -829,28 +965,68 @@ app.post('/api/sessions', h((req, res) => createSession(req, res)));
 async function createSession(req, res) {
   const { name, params } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: 'Nom requis' });
-  const pool = await filteredPool(params);
+  let pool = await filteredPool(params);
   const N = params.questionCount;
   if (pool.length < N) return res.status(400).json({ error: `Pas assez de questions : ${pool.length} disponibles pour ${N} demandées.` });
-  const chosen = pickSessionQuestions(pool, N, params.difficultyMode || 'any');
   const k = params.gridSize;
+  let chosen; let thematicRows = null;
+  if (params.thematic && Array.isArray(params.thematicTags) && params.thematicTags.length === k) {
+    // Grilles thématiques : chaque ligne de la grille = un mot-clé ; les questions sont réparties par thème
+    thematicRows = params.thematicTags.map(t => String(t).toLowerCase());
+    let perRow = Math.ceil(N / k);
+    // Traiter d'abord les thèmes les plus rares pour éviter qu'ils soient vidés par les chevauchements
+    const order = thematicRows.map((t, i) => ({ t, i, n: pool.filter(q => q.tags.includes(t)).length })).sort((a, b) => a.n - b.n);
+    const blocks = Array(k).fill(null); const taken = new Set();
+    for (const { t, i } of order) {
+      const cand = shuffle(pool.filter(q => q.tags.includes(t) && !taken.has(q.id)));
+      // préférer les questions exclusives au thème (moins de conflits)
+      cand.sort((a, b) => a.tags.filter(x => thematicRows.includes(x)).length - b.tags.filter(x => thematicRows.includes(x)).length);
+      const sub = cand.slice(0, perRow); sub.forEach(q => taken.add(q.id)); blocks[i] = sub;
+    }
+    perRow = Math.min(...blocks.map(b => b.length));
+    if (perRow < k) { const short = thematicRows[blocks.findIndex(b => b.length === perRow)]; return res.status(400).json({ error: `Pas assez de questions publiées pour le thème #${short} (${perRow}, minimum ${k}).` }); }
+    chosen = blocks.flatMap(b => b.slice(0, perRow));
+  } else {
+    // Révisions espacées : privilégier les questions les moins réussies (stats) si demandé
+    if (params.spaced) {
+      const st = Object.fromEntries((await all('SELECT question_id, answered, correct FROM question_stats')).map(r => [r.question_id, r]));
+      const weight = q => { const x = st[q.id]; if (!x || !x.answered) return 1; return 1 + 3 * (1 - x.correct / x.answered); }; // ratées → poids jusqu'à 4
+      const weighted = []; for (const q of pool) { const w = weight(q); for (let i = 0; i < Math.round(w * 2); i++) weighted.push(q); }
+      shuffle(weighted); const seenIds = new Set(); const prio = [];
+      for (const q of weighted) { if (!seenIds.has(q.id)) { seenIds.add(q.id); prio.push(q); } }
+      pool = prio; // ordre pondéré, pickSessionQuestions ne re-mélange que les unités... on force l'ordre en désactivant le shuffle interne
+      chosen = pickSessionQuestions(pool, N, params.difficultyMode || 'any', false);
+    } else {
+      chosen = pickSessionQuestions(pool, N, params.difficultyMode || 'any');
+    }
+  }
   const total = params.participants + Math.max(2, Math.ceil(params.participants * (params.reservePct ?? 10) / 100));
   const seen = new Set();
   const gridsCells = [];
   let guard = 0;
+  const NN = chosen.length;
   while (gridsCells.length < total && guard < total * 50) {
     guard++;
-    const nums = shuffle([...Array(N).keys()].map(i => i + 1)).slice(0, k * k);
-    const key = [...nums].sort((a, b) => a - b).join(',');
-    if (seen.has(key) && N > k * k) continue;
+    let cells = [];
+    if (thematicRows) {
+      // ligne r = numéros des questions du thème r (positions perRow*r+1 .. perRow*(r+1))
+      const perRow = NN / k;
+      for (let r = 0; r < k; r++) {
+        const nums = shuffle([...Array(perRow).keys()].map(i => r * perRow + i + 1)).slice(0, k);
+        cells.push(nums);
+      }
+    } else {
+      const nums = shuffle([...Array(NN).keys()].map(i => i + 1)).slice(0, k * k);
+      for (let r = 0; r < k; r++) cells.push(nums.slice(r * k, (r + 1) * k));
+    }
+    const key = cells.flat().slice().sort((a, b) => a - b).join(',') + '|' + cells.map(r => r.join('-')).join('/');
+    if (seen.has(key) && NN > k * k) continue;
     seen.add(key);
-    const cells = [];
-    for (let r = 0; r < k; r++) cells.push(nums.slice(r * k, (r + 1) * k));
     gridsCells.push(cells);
   }
   const info = await run(
-    'INSERT INTO sessions (name, params, question_order, questions_snapshot) VALUES (?, ?, ?, ?)',
-    [name.trim(), JSON.stringify(params), JSON.stringify(chosen.map(q => q.id)), JSON.stringify(chosen)]);
+    'INSERT INTO sessions (name, params, question_order, questions_snapshot, owner_id, thematic_rows) VALUES (?, ?, ?, ?, ?, ?)',
+    [name.trim(), JSON.stringify(params), JSON.stringify(chosen.map(q => q.id)), JSON.stringify(chosen), req.user?.id || null, thematicRows ? JSON.stringify(thematicRows) : null]);
   const sid = info.lastInsertRowid;
   for (let i = 0; i < gridsCells.length; i++) {
     await run('INSERT INTO grids (session_id, code, cells) VALUES (?, ?, ?)',
@@ -964,7 +1140,7 @@ app.get('/api/sessions/:id/verify/:code', h(async (req, res) => {
 app.get('/api/settings', h(async (req, res) => {
   res.json(await getSetting('app', { lang: 'fr', theme: 'suisse', sounds: true, animations: true }));
 }));
-app.put('/api/settings', h(async (req, res) => {
+app.put('/api/settings', adminOnly, h(async (req, res) => {
   await setSetting('app', req.body);
   res.json({ ok: true });
 }));

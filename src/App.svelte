@@ -12,6 +12,7 @@
   import Remote from './pages/Remote.svelte';
   import Join from './pages/Join.svelte';
   import Stats from './pages/Stats.svelte';
+  import Review from './pages/Review.svelte';
   import Import from './pages/Import.svelte';
   import Settings from './pages/Settings.svelte';
 
@@ -43,25 +44,32 @@
   }
 
   let needLogin = false;
+  let email = localStorage.getItem('docbingo_email') || '';
   let password = '';
   let loginError = false;
+  let user = null;
+  let pending = 0;
   async function doLogin() {
     loginError = false;
     try {
-      const r = await api.post('/api/login', { password });
+      const r = await api.post('/api/login', { email: email.trim(), password });
       setToken(r.token);
-      needLogin = false;
-      password = '';
-      loadSettings();
-      checkRunning();
+      user = r.user; localStorage.setItem('docbingo_email', email.trim());
+      needLogin = false; password = '';
+      loadSettings(); checkRunning(); loadMe();
     } catch { loginError = true; }
   }
+  async function loadMe() {
+    try { user = await api.get('/api/me'); pending = (await api.get('/api/review/pending')).count; } catch {}
+  }
+  function logout() { setToken(null); localStorage.removeItem('docbingo_token'); user = null; needLogin = true; }
 
   onMount(() => {
     parseHash();
     loadSettings();
     checkRunning();
-    window.addEventListener('hashchange', () => { parseHash(); checkRunning(); });
+    loadMe();
+    window.addEventListener('hashchange', () => { parseHash(); checkRunning(); loadMe(); });
     window.addEventListener('docbingo:settings', (e) => { settings = e.detail; applySettings(); });
     window.addEventListener('docbingo:auth', () => { needLogin = true; });
     // Keep-alive : évite l'endormissement de l'hébergement gratuit tant que l'application est ouverte
@@ -89,10 +97,12 @@
         <rect x="39" y="46" width="22" height="8" rx="2" fill="var(--accent-2-ink)"/>
       </svg>
       <h1 style="margin:10px 0 18px">DocBingo</h1>
-      <input type="password" placeholder="Mot de passe" bind:value={password}
-        on:keydown={(e) => e.key === 'Enter' && doLogin()} style="max-width:260px; text-align:center" />
-      {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">Mot de passe incorrect</div>{/if}
-      <button class="btn" style="margin-top:14px" on:click={doLogin}>Entrer</button>
+      <input type="email" placeholder="Email" bind:value={email} autocomplete="username" style="max-width:280px; text-align:center; margin-bottom:8px" />
+      <input type="password" placeholder={$t('login.password')} bind:value={password} autocomplete="current-password"
+        on:keydown={(e) => e.key === 'Enter' && doLogin()} style="max-width:280px; text-align:center" />
+      {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{$t('login.error')}</div>{/if}
+      <button class="btn" style="margin-top:14px" on:click={doLogin}>{$t('login.enter')}</button>
+      <div class="muted" style="margin-top:14px; font-size:12.5px; max-width:300px; line-height:1.5">{$t('login.hint')}</div>
     </div>
   </div>
 {:else if isDisplay}
@@ -113,11 +123,16 @@
       </a>
       <nav>
         <a href="#/questions" class:active={['questions', 'question', 'import'].includes(route.page)}>{$t('nav.questions')}</a>
+        {#if user?.role === 'admin' && pending}<a href="#/review" class:active={route.page === 'review'}>{$t('nav.review')} <span class="badge">{pending}</span></a>{/if}
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
         <a href="#/stats" class:active={route.page === 'stats'}>{$t('nav.stats')}</a>
         <a href="#/settings" class:active={route.page === 'settings'}>{$t('nav.settings')}</a>
+        {#if user?.id}<button class="userbtn" on:click={logout} title={$t('login.logout')}>{user.name} · {user.role === 'admin' ? $t('role.admin') : $t('role.author')} ⏻</button>{/if}
       </nav>
     </header>
+    {#if user?.mustChange}
+      <div class="alert warn" style="margin-bottom:14px">🔑 {$t('login.mustchange')} <a href="#/settings">{$t('nav.settings')} →</a></div>
+    {/if}
 
     {#if runningSession && route.page !== 'play'}
       <a class="resume" href={'#/play/' + runningSession.id}>
@@ -133,7 +148,8 @@
       {:else if route.page === 'session-new'}<SessionNew />
       {:else if route.page === 'session'}<SessionDetail id={route.param} />
       {:else if route.page === 'stats'}<Stats />
-      {:else if route.page === 'settings'}<Settings {settings} />
+      {:else if route.page === 'review'}<Review on:done={loadMe} />
+      {:else if route.page === 'settings'}<Settings {settings} {user} />
       {:else}<Questions />{/if}
     </main>
   </div>
@@ -156,6 +172,8 @@
   }
   nav a.active { background: var(--accent); color: var(--accent-ink); }
   nav a:hover:not(.active) { background: var(--soft); color: var(--soft-ink); }
+  .badge { background: var(--accent-2); color: var(--accent-2-ink); border-radius: 999px; padding: 1px 7px; font-size: 11px; margin-left: 3px; }
+  .userbtn { border: 1px solid var(--border); background: var(--panel); color: var(--ink-dim); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px; }
   .login-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
   .login-box { text-align: center; display: flex; flex-direction: column; align-items: center; padding: 30px; }
   .resume {

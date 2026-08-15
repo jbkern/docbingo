@@ -19,6 +19,9 @@
   let gridSize = 0;               // 0 = auto (recommended)
   let notes = '';
   let difficultyMode = 'any';
+  let spaced = false;
+  let thematic = false;
+  let thematicTags = [];
   let sounds = true;
   let animations = true;
   let plan = null;
@@ -44,7 +47,8 @@
           logic: tagLogic,
           count: sizing === 'count' ? questionCount : null,
           durationMin: sizing === 'duration' ? durationMin : null,
-          secondsPerQuestion, marking, excludeRecent, participants, difficultyMode
+          secondsPerQuestion, marking, excludeRecent, participants, difficultyMode,
+          thematicTags: thematic ? thematicTags : []
         });
       } catch (e) { plan = null; }
       planning = false;
@@ -52,7 +56,7 @@
   }
 
   $: effectiveGrid = gridSize || plan?.recommended || 4;
-  $: alertsBlocking = plan?.alerts?.some(a => a.type === 'not_enough_questions');
+  $: alertsBlocking = plan?.alerts?.some(a => a.type === 'not_enough_questions') || (thematic && thematicTags.length !== effectiveGrid);
 
   async function create() {
     error = '';
@@ -64,7 +68,8 @@
           mode, tags: mode === 'theme' ? tags : [], tagLogic,
           questionCount: plan.questionCount, secondsPerQuestion,
           participants, gridSize: effectiveGrid, marking, afterBingoDefault,
-          excludeRecent, reservePct: 10, notes: notes.trim() || null, sounds, animations, difficultyMode
+          excludeRecent, reservePct: 10, notes: notes.trim() || null, sounds, animations, difficultyMode,
+          spaced, thematic: thematic && thematicTags.length === effectiveGrid, thematicTags: thematic ? thematicTags : []
         }
       });
       location.hash = '#/session/' + s.id;
@@ -72,7 +77,12 @@
     creating = false;
   }
 
+  function toggleThematicTag(n) {
+    thematicTags = thematicTags.includes(n) ? thematicTags.filter(x => x !== n) : (thematicTags.length < effectiveGrid ? [...thematicTags, n] : thematicTags);
+    refreshPlan();
+  }
   function alertText(a) {
+    if (a.type === 'thematic_tag_short') return $t('snew.alert.thematic', { t: a.tag, n: a.available });
     if (a.type === 'not_enough_questions') return $t('snew.alert.notenough', { a: a.available, n: a.needed });
     if (a.type === 'incomplete_questions') return $t('snew.alert.incomplete', { n: a.ids.length });
     if (a.type === 'few_questions_for_grid') return $t('snew.alert.fewq', { k: a.gridSize });
@@ -180,6 +190,29 @@
           <button class="btn small" class:secondary={gridSize !== k} on:click={() => (gridSize = k)}>{k}×{k}</button>
         {/each}
       </div>
+    </div>
+
+    <div>
+      <label class="row" style="gap:8px; text-transform:none; font-size:14px; width:auto; margin:0 0 6px">
+        <input type="checkbox" bind:checked={spaced} style="width:auto" /> 🔁 {$t('snew.spaced')}
+      </label>
+      <div class="muted">{$t('snew.spacedhint')}</div>
+    </div>
+
+    <div>
+      <label class="row" style="gap:8px; text-transform:none; font-size:14px; width:auto; margin:0 0 6px">
+        <input type="checkbox" bind:checked={thematic} on:change={refreshPlan} style="width:auto" /> 🎨 {$t('snew.thematic')}
+      </label>
+      <div class="muted">{$t('snew.thematichint', { k: effectiveGrid })}</div>
+      {#if thematic}
+        <div class="row" style="gap:6px; margin-top:8px">
+          {#each allTags as tag}
+            <button class="tag" style="border:none;cursor:pointer" style:outline={thematicTags.includes(tag.name) ? '2.5px solid var(--accent-2)' : 'none'}
+              on:click={() => toggleThematicTag(tag.name)}>{thematicTags.indexOf(tag.name) >= 0 ? (thematicTags.indexOf(tag.name) + 1) + '. ' : ''}#{tag.name} <span style="font-size:11px">{tag.count}</span></button>
+          {/each}
+        </div>
+        <div class="muted" style="margin-top:6px">{thematicTags.length} / {effectiveGrid} — {$t('snew.thematicorder')}</div>
+      {/if}
     </div>
 
     <div class="row" style="gap:26px">

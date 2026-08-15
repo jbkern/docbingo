@@ -2,6 +2,24 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'login.password': 'Mot de passe', 'login.error': 'Identifiants incorrects', 'login.enter': 'Se connecter', 'login.logout': 'Se déconnecter',
+  'login.hint': 'Utilisez l\'email et le mot de passe fournis par l\'administrateur. Ancienne connexion par mot de passe unique : laissez l\'email vide.',
+  'login.mustchange': 'Vous utilisez un mot de passe temporaire : changez-le dans les réglages.',
+  'nav.review': 'À valider', 'role.admin': 'administrateur', 'role.author': 'auteur',
+  'status.all': 'Tous statuts', 'status.published': 'Publiée', 'status.proposed': 'Proposée', 'status.draft': 'Brouillon',
+  'status.draftsave': 'Enregistrer en brouillon', 'status.publish': 'Publier', 'status.propose': 'Proposer à la validation',
+  'review.title': 'Questions à valider', 'review.help': 'Questions proposées par les auteurs. Publiez-les pour qu\'elles entrent dans les sessions, ou renvoyez-les en brouillon avec un commentaire.',
+  'review.empty': 'Rien à valider.', 'review.noteph': 'Commentaire pour l\'auteur (facultatif)', 'review.return': 'Renvoyer', 'review.publish': 'Publier', 'review.returned': 'Renvoyée par l\'administrateur',
+  'acct.title': 'Mon compte', 'acct.changepw': 'Changer de mot de passe', 'acct.current': 'Mot de passe actuel', 'acct.new': 'Nouveau (8 car. min.)', 'acct.badcurrent': 'Mot de passe actuel incorrect', 'acct.tooshort': 'Trop court (8 caractères minimum)',
+  'acct.users': 'Comptes utilisateurs', 'acct.usershelp': 'Les auteurs créent et proposent des questions ; vous les validez. Les administrateurs publient directement et gèrent les comptes. Un mot de passe temporaire est généré à la création — transmettez-le, la personne devra le changer.',
+  'acct.name': 'Nom', 'acct.role': 'Rôle', 'acct.qcount': 'Questions', 'acct.resetpw': 'Réinitialiser le mot de passe', 'acct.deactivate': 'Désactiver', 'acct.activate': 'Réactiver', 'acct.create': 'Créer le compte',
+  'acct.temp': 'Mot de passe temporaire pour {e} :', 'acct.temphint': 'à transmettre, il devra être changé à la première connexion.',
+  'coll.title': 'Collections (partage entre équipes)', 'coll.help': 'Exportez une collection de questions publiées (par mots-clés, images incluses) pour la partager avec un autre service ou une autre instance DocBingo ; importez une collection reçue — les doublons sont ignorés.',
+  'coll.export': 'Exporter', 'coll.tagsph': 'Mots-clés (vide = tout)', 'coll.download': 'Télécharger la collection', 'coll.import': 'Importer une collection', 'coll.importbtn': 'Importer', 'coll.done': '{c} question(s) importée(s), {s} ignorée(s).',
+  'snew.spaced': 'Révisions espacées : privilégier les questions les plus ratées', 'snew.spacedhint': 'Les questions au faible taux de réussite (réponses via smartphone) sont tirées en priorité.',
+  'snew.thematic': 'Grilles thématiques : une ligne = un mot-clé', 'snew.thematichint': 'Choisissez {k} mots-clés (autant que de lignes) ; chaque ligne de la grille ne contient que des questions de son thème.',
+  'snew.thematicorder': 'l\'ordre des mots-clés = l\'ordre des lignes', 'snew.alert.thematic': 'Thème #{t} : seulement {n} question(s) publiée(s) — insuffisant.',
+
   'nav.stats': 'Statistiques',
   'play.joinhint': 'Participez sur votre smartphone :', 'play.connected': 'connecté(s)', 'play.report': 'Résultats',
   'play.bonus': 'Bonus', 'play.bonushint': 'Question éclair : bonne réponse = un joker (case libre)', 'play.bonusopen': 'réponses ouvertes', 'play.bonusrevealed': 'réponse affichée',
@@ -157,6 +175,24 @@ const fr = {
 
 const en = {
 
+  'login.password': 'Password', 'login.error': 'Wrong credentials', 'login.enter': 'Sign in', 'login.logout': 'Sign out',
+  'login.hint': 'Use the email and password given by the administrator. Legacy single-password login: leave the email empty.',
+  'login.mustchange': 'You are using a temporary password: change it in Settings.',
+  'nav.review': 'To review', 'role.admin': 'administrator', 'role.author': 'author',
+  'status.all': 'All statuses', 'status.published': 'Published', 'status.proposed': 'Proposed', 'status.draft': 'Draft',
+  'status.draftsave': 'Save as draft', 'status.publish': 'Publish', 'status.propose': 'Submit for review',
+  'review.title': 'Questions to review', 'review.help': 'Questions proposed by authors. Publish them so they enter sessions, or return them as drafts with a comment.',
+  'review.empty': 'Nothing to review.', 'review.noteph': 'Comment for the author (optional)', 'review.return': 'Return', 'review.publish': 'Publish', 'review.returned': 'Returned by the administrator',
+  'acct.title': 'My account', 'acct.changepw': 'Change password', 'acct.current': 'Current password', 'acct.new': 'New (min. 8 chars)', 'acct.badcurrent': 'Wrong current password', 'acct.tooshort': 'Too short (8 characters minimum)',
+  'acct.users': 'User accounts', 'acct.usershelp': 'Authors create and propose questions; you validate them. Administrators publish directly and manage accounts. A temporary password is generated on creation — pass it on, the person will have to change it.',
+  'acct.name': 'Name', 'acct.role': 'Role', 'acct.qcount': 'Questions', 'acct.resetpw': 'Reset password', 'acct.deactivate': 'Deactivate', 'acct.activate': 'Reactivate', 'acct.create': 'Create account',
+  'acct.temp': 'Temporary password for {e}:', 'acct.temphint': 'to pass on; it must be changed at first login.',
+  'coll.title': 'Collections (sharing between teams)', 'coll.help': 'Export a collection of published questions (by keywords, images included) to share with another department or DocBingo instance; import a received collection — duplicates are skipped.',
+  'coll.export': 'Export', 'coll.tagsph': 'Keywords (empty = all)', 'coll.download': 'Download collection', 'coll.import': 'Import a collection', 'coll.importbtn': 'Import', 'coll.done': '{c} question(s) imported, {s} skipped.',
+  'snew.spaced': 'Spaced repetition: favour the most missed questions', 'snew.spacedhint': 'Questions with a low success rate (phone answers) are drawn first.',
+  'snew.thematic': 'Thematic cards: one row = one keyword', 'snew.thematichint': 'Pick {k} keywords (as many as rows); each row of the card only contains questions from its theme.',
+  'snew.thematicorder': 'keyword order = row order', 'snew.alert.thematic': 'Theme #{t}: only {n} published question(s) — not enough.',
+
   'nav.stats': 'Statistics',
   'play.joinhint': 'Join on your phone:', 'play.connected': 'connected', 'play.report': 'Results',
   'play.bonus': 'Bonus', 'play.bonushint': 'Flash question: correct answer = a joker (free cell)', 'play.bonusopen': 'answers open', 'play.bonusrevealed': 'answer shown',
@@ -304,6 +340,24 @@ const en = {
 };
 
 const de = {
+
+  'login.password': 'Passwort', 'login.error': 'Falsche Anmeldedaten', 'login.enter': 'Anmelden', 'login.logout': 'Abmelden',
+  'login.hint': 'Verwenden Sie E-Mail und Passwort vom Administrator. Alte Anmeldung mit Einzelpasswort: E-Mail leer lassen.',
+  'login.mustchange': 'Sie verwenden ein temporäres Passwort: Ändern Sie es in den Einstellungen.',
+  'nav.review': 'Zu prüfen', 'role.admin': 'Administrator', 'role.author': 'Autor/in',
+  'status.all': 'Alle Status', 'status.published': 'Veröffentlicht', 'status.proposed': 'Vorgeschlagen', 'status.draft': 'Entwurf',
+  'status.draftsave': 'Als Entwurf speichern', 'status.publish': 'Veröffentlichen', 'status.propose': 'Zur Prüfung einreichen',
+  'review.title': 'Zu prüfende Fragen', 'review.help': 'Von Autor/innen vorgeschlagene Fragen. Veröffentlichen, damit sie in Sitzungen erscheinen, oder mit Kommentar als Entwurf zurückgeben.',
+  'review.empty': 'Nichts zu prüfen.', 'review.noteph': 'Kommentar für Autor/in (optional)', 'review.return': 'Zurückgeben', 'review.publish': 'Veröffentlichen', 'review.returned': 'Vom Administrator zurückgegeben',
+  'acct.title': 'Mein Konto', 'acct.changepw': 'Passwort ändern', 'acct.current': 'Aktuelles Passwort', 'acct.new': 'Neu (min. 8 Zeichen)', 'acct.badcurrent': 'Aktuelles Passwort falsch', 'acct.tooshort': 'Zu kurz (mind. 8 Zeichen)',
+  'acct.users': 'Benutzerkonten', 'acct.usershelp': 'Autor/innen erstellen und schlagen Fragen vor; Sie prüfen sie. Administratoren veröffentlichen direkt und verwalten Konten. Beim Anlegen wird ein temporäres Passwort erzeugt — weitergeben, es muss geändert werden.',
+  'acct.name': 'Name', 'acct.role': 'Rolle', 'acct.qcount': 'Fragen', 'acct.resetpw': 'Passwort zurücksetzen', 'acct.deactivate': 'Deaktivieren', 'acct.activate': 'Reaktivieren', 'acct.create': 'Konto erstellen',
+  'acct.temp': 'Temporäres Passwort für {e}:', 'acct.temphint': 'weitergeben; muss bei der ersten Anmeldung geändert werden.',
+  'coll.title': 'Sammlungen (Austausch zwischen Teams)', 'coll.help': 'Exportieren Sie eine Sammlung veröffentlichter Fragen (nach Stichwörtern, mit Bildern), um sie mit einer anderen Abteilung oder DocBingo-Instanz zu teilen; importieren Sie eine erhaltene Sammlung — Duplikate werden übersprungen.',
+  'coll.export': 'Exportieren', 'coll.tagsph': 'Stichwörter (leer = alle)', 'coll.download': 'Sammlung herunterladen', 'coll.import': 'Sammlung importieren', 'coll.importbtn': 'Importieren', 'coll.done': '{c} Frage(n) importiert, {s} übersprungen.',
+  'snew.spaced': 'Verteilte Wiederholung: am häufigsten verfehlte Fragen bevorzugen', 'snew.spacedhint': 'Fragen mit niedriger Erfolgsquote (Smartphone-Antworten) werden zuerst gezogen.',
+  'snew.thematic': 'Thematische Karten: eine Zeile = ein Stichwort', 'snew.thematichint': 'Wählen Sie {k} Stichwörter (so viele wie Zeilen); jede Zeile enthält nur Fragen ihres Themas.',
+  'snew.thematicorder': 'Reihenfolge der Stichwörter = Reihenfolge der Zeilen', 'snew.alert.thematic': 'Thema #{t}: nur {n} veröffentlichte Frage(n) — nicht genug.',
 
   'nav.stats': 'Statistiken',
   'play.joinhint': 'Mit dem Smartphone teilnehmen:', 'play.connected': 'verbunden', 'play.report': 'Ergebnisse',
