@@ -2,6 +2,20 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'about.title': 'À propos & mentions légales', 'about.coauthors': 'co-auteurs',
+  'about.ip': 'Propriété intellectuelle', 'about.ipdesc': 'DocBingo a été conçu et dirigé par Jean-Baptiste Kern et développé avec l\'assistance de Claude (Anthropic). Les questions, explications et illustrations appartiennent à leurs auteurs respectifs.',
+  'about.software': 'Logiciel', 'about.softwaredesc': 'Le code source de DocBingo est un logiciel libre distribué sous licence GNU Affero General Public License v3.0 : vous pouvez l\'utiliser, l\'étudier, le modifier et le redistribuer, à condition de conserver cette mention et de publier le code de toute version modifiée mise à disposition en ligne, sous la même licence.',
+  'about.source': 'Code source', 'about.licensetext': 'texte de la licence',
+  'about.content': 'Contenu pédagogique', 'about.contentdesc': 'Sauf mention contraire de leurs auteurs, les questions, explications et collections partagées depuis DocBingo sont mises à disposition sous licence Creative Commons Attribution – Pas d\'utilisation commerciale – Partage dans les mêmes conditions 4.0 : réutilisation libre entre confrères et institutions de formation, avec attribution, hors usage commercial, et sous la même licence.',
+  'about.brand': 'Marque', 'about.branddesc': '« DocBingo » et son logo sont des signes distinctifs de Jean-Baptiste Kern. Leur usage pour désigner un service dérivé nécessite un accord.',
+  'about.data': 'Données personnelles', 'about.datadesc': 'DocBingo enregistre le minimum nécessaire : email et nom des auteurs (comptes), prénom choisi par les participants et leurs réponses (statistiques pédagogiques, sans autre identifiant). Les données sont hébergées sur des serveurs situés dans l\'Union européenne (Francfort). Aucune donnée n\'est cédée à des tiers. Les administrateurs peuvent supprimer un participant ou un compte à tout moment.',
+  'about.credits': 'Crédits', 'about.creditsdesc': 'Conception : Jean-Baptiste Kern. Développement : Claude (Anthropic) sous la direction de l\'auteur. Contenu : Jean-Baptiste Kern et les auteurs de la banque de questions.',
+  'about.thirdparty': 'bibliothèques tierces sous licences MIT / Apache-2.0.',
+  'about.disclaimer': 'Ces mentions sont fournies à titre d\'information et ne constituent pas un avis juridique.',
+
+  'settings.fullbackup': 'Sauvegarde complète', 'settings.backuphint': 'La sauvegarde complète contient tout (questions, images, sessions, comptes, statistiques). Une sauvegarde chiffrée est en outre réalisée automatiquement chaque semaine et conservée 90 jours (voir le guide, § 11).',
+  'settings.restore': 'Restaurer une sauvegarde complète…', 'settings.restorewarn': 'La restauration REMPLACE toutes les données actuelles par celles du fichier. Tapez RESTAURER pour confirmer.', 'settings.restorebtn': 'Restaurer', 'settings.restored': 'Restauration terminée ({n} enregistrements). Rechargement…',
+
   'snew.participation': 'Participation', 'part.mixed': 'Papier + smartphone', 'part.paper': 'Papier uniquement', 'part.digital': 'Smartphone uniquement',
   'part.mixed.desc': 'Grilles imprimées ET code de session pour smartphone : chacun choisit. Les bingos papier se vérifient par code de grille, les bingos smartphone sont automatiques.',
   'part.paper.desc': 'Pas de code de session ni de participation numérique : grilles imprimées, vérification des bingos par code de grille.',
@@ -188,6 +202,20 @@ const fr = {
 
 const en = {
 
+  'about.title': 'About & legal notice', 'about.coauthors': 'co-authors',
+  'about.ip': 'Intellectual property', 'about.ipdesc': 'DocBingo was designed and led by Jean-Baptiste Kern and developed with the assistance of Claude (Anthropic). Questions, explanations and illustrations belong to their respective authors.',
+  'about.software': 'Software', 'about.softwaredesc': 'DocBingo\'s source code is free software under the GNU Affero General Public License v3.0: you may use, study, modify and redistribute it, provided you keep this notice and publish the source of any modified version made available online, under the same licence.',
+  'about.source': 'Source code', 'about.licensetext': 'licence text',
+  'about.content': 'Educational content', 'about.contentdesc': 'Unless their authors state otherwise, questions, explanations and collections shared from DocBingo are released under Creative Commons Attribution – NonCommercial – ShareAlike 4.0: free reuse between colleagues and teaching institutions, with attribution, non-commercially, under the same licence.',
+  'about.brand': 'Trademark', 'about.branddesc': '"DocBingo" and its logo are distinctive signs of Jean-Baptiste Kern. Using them to designate a derived service requires an agreement.',
+  'about.data': 'Personal data', 'about.datadesc': 'DocBingo stores the strict minimum: authors\' email and name (accounts), the first name chosen by participants and their answers (teaching statistics, no other identifier). Data is hosted on servers located in the European Union (Frankfurt). No data is shared with third parties. Administrators can delete a participant or an account at any time.',
+  'about.credits': 'Credits', 'about.creditsdesc': 'Design: Jean-Baptiste Kern. Development: Claude (Anthropic) under the author\'s direction. Content: Jean-Baptiste Kern and the question bank authors.',
+  'about.thirdparty': 'third-party libraries under MIT / Apache-2.0 licences.',
+  'about.disclaimer': 'This notice is provided for information and does not constitute legal advice.',
+
+  'settings.fullbackup': 'Full backup', 'settings.backuphint': 'The full backup contains everything (questions, images, sessions, accounts, statistics). An encrypted backup is also made automatically every week and kept for 90 days (see guide § 11).',
+  'settings.restore': 'Restore a full backup…', 'settings.restorewarn': 'Restoring REPLACES all current data with the file contents. Type RESTAURER to confirm.', 'settings.restorebtn': 'Restore', 'settings.restored': 'Restore done ({n} records). Reloading…',
+
   'snew.participation': 'Participation', 'part.mixed': 'Paper + phone', 'part.paper': 'Paper only', 'part.digital': 'Phone only',
   'part.mixed.desc': 'Printed cards AND a session code for phones: everyone chooses. Paper bingos are checked by card code, phone bingos are automatic.',
   'part.paper.desc': 'No session code, no digital participation: printed cards, bingo check by card code.',
@@ -366,6 +394,20 @@ const en = {
 };
 
 const de = {
+
+  'about.title': 'Über & Impressum', 'about.coauthors': 'Mitautor/innen',
+  'about.ip': 'Geistiges Eigentum', 'about.ipdesc': 'DocBingo wurde von Jean-Baptiste Kern konzipiert und geleitet und mit Unterstützung von Claude (Anthropic) entwickelt. Fragen, Erklärungen und Abbildungen gehören ihren jeweiligen Autor/innen.',
+  'about.software': 'Software', 'about.softwaredesc': 'Der Quellcode von DocBingo ist freie Software unter der GNU Affero General Public License v3.0: Sie dürfen ihn nutzen, studieren, ändern und weitergeben, sofern Sie diesen Hinweis behalten und den Quellcode jeder online bereitgestellten geänderten Version unter derselben Lizenz veröffentlichen.',
+  'about.source': 'Quellcode', 'about.licensetext': 'Lizenztext',
+  'about.content': 'Lehrinhalte', 'about.contentdesc': 'Sofern die Autor/innen nichts anderes angeben, stehen Fragen, Erklärungen und aus DocBingo geteilte Sammlungen unter Creative Commons Namensnennung – Nicht kommerziell – Weitergabe unter gleichen Bedingungen 4.0.',
+  'about.brand': 'Marke', 'about.branddesc': '„DocBingo“ und das Logo sind Kennzeichen von Jean-Baptiste Kern. Ihre Verwendung für einen abgeleiteten Dienst erfordert eine Vereinbarung.',
+  'about.data': 'Personendaten', 'about.datadesc': 'DocBingo speichert das Nötigste: E-Mail und Name der Autor/innen (Konten), den von Teilnehmenden gewählten Vornamen und ihre Antworten (Lehrstatistik, ohne weitere Kennung). Die Daten werden auf Servern in der EU (Frankfurt) gehostet. Keine Weitergabe an Dritte. Administratoren können Teilnehmende oder Konten jederzeit löschen.',
+  'about.credits': 'Credits', 'about.creditsdesc': 'Konzept: Jean-Baptiste Kern. Entwicklung: Claude (Anthropic) unter Leitung des Autors. Inhalte: Jean-Baptiste Kern und die Autor/innen der Fragenbank.',
+  'about.thirdparty': 'Drittbibliotheken unter MIT-/Apache-2.0-Lizenzen.',
+  'about.disclaimer': 'Diese Angaben dienen der Information und stellen keine Rechtsberatung dar.',
+
+  'settings.fullbackup': 'Vollständige Sicherung', 'settings.backuphint': 'Die vollständige Sicherung enthält alles (Fragen, Bilder, Sitzungen, Konten, Statistiken). Zusätzlich wird wöchentlich automatisch eine verschlüsselte Sicherung erstellt und 90 Tage aufbewahrt (siehe Handbuch § 11).',
+  'settings.restore': 'Vollständige Sicherung wiederherstellen…', 'settings.restorewarn': 'Die Wiederherstellung ERSETZT alle aktuellen Daten durch die Datei. Geben Sie RESTAURER ein, um zu bestätigen.', 'settings.restorebtn': 'Wiederherstellen', 'settings.restored': 'Wiederherstellung abgeschlossen ({n} Datensätze). Neu laden…',
 
   'snew.participation': 'Teilnahme', 'part.mixed': 'Papier + Smartphone', 'part.paper': 'Nur Papier', 'part.digital': 'Nur Smartphone',
   'part.mixed.desc': 'Gedruckte Karten UND Sitzungscode für Smartphones: jede/r wählt. Papier-Bingos werden per Kartencode geprüft, Smartphone-Bingos automatisch.',

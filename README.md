@@ -29,6 +29,10 @@ Le fichier `render.yaml` décrit le service (plan gratuit, build `npm install &&
 - **Frontend** : Vite + Svelte 5, SPA (routeur par hash), i18n FR/EN/DE, thèmes par design tokens CSS. PDF des grilles généré côté navigateur (pdf-lib). Synchronisation présentateur ↔ écran public par BroadcastChannel (fonctionne hors ligne).
 - **Backend** : Express 5, base libSQL/SQLite (`@libsql/client`), images stockées en base (BLOB), sauvegarde automatique de l'état de session à chaque question.
 
+## Licence
+
+Code : **AGPL-3.0** (voir `LICENSE`, `NOTICE.md`). Contenu pédagogique partagé : **CC BY-NC-SA 4.0**. © Jean-Baptiste Kern & co-auteurs.
+
 ## Référence
 
 Le cahier des charges complet et les maquettes se trouvent dans le projet Claude « Projet Bingo ».

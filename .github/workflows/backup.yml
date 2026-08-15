@@ -1,0 +1,29 @@
+name: Sauvegarde hebdomadaire (chiffrée)
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'     # tous les lundis 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger la sauvegarde complète et la chiffrer
+        env:
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+          URL: https://docbingo.onrender.com
+        run: |
+          set -e
+          for i in 1 2 3 4 5 6; do curl -sf "$URL/api/ping" >/dev/null && break; echo "réveil du serveur ($i)…"; sleep 20; done
+          TOKEN=$(curl -sf -X POST -H "Content-Type: application/json" -d "{\"email\":\"jeanbaptiste.kern@hibroye.ch\",\"password\":\"$PW\"}" "$URL/api/login" | jq -r '.token')
+          curl -sf -H "X-DocBingo-Token: $TOKEN" "$URL/api/backup" -o backup.json
+          echo "Taille : $(du -h backup.json | cut -f1) — $(jq '[.tables[] | length] | add' backup.json) enregistrements, $(jq '.images | length' backup.json) images"
+          # Chiffrement AES-256 (mot de passe = DOCBINGO_PASSWORD) — déchiffrer : openssl enc -d -aes-256-cbc -pbkdf2 -in fichier.enc -out backup.json
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in backup.json -out "docbingo-backup-$(date -u +%F).json.enc" -pass env:PW
+          rm backup.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docbingo-backup-${{ github.run_id }}
+          path: docbingo-backup-*.json.enc
+          retention-days: 90

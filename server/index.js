@@ -807,6 +807,33 @@ app.post('/api/collections/import', collUpload.single('file'), h(async (req, res
   res.json({ created, skipped, cases: Object.keys(caseMap).length, images: Object.keys(imgMap).length });
 }));
 
+/* ---------- Sauvegarde complète / restauration (admin) ---------- */
+const BACKUP_TABLES = ['users', 'questions', 'tags', 'question_tags', 'clinical_cases', 'sessions', 'grids', 'participants', 'answers', 'question_stats', 'settings', 'remote_codes'];
+app.get('/api/backup', adminOnly, h(async (req, res) => {
+  const out = { format: 'docbingo-backup', version: 2, exportedAt: new Date().toISOString(), tables: {}, images: [] };
+  for (const t of BACKUP_TABLES) out.tables[t] = await all(`SELECT * FROM ${t}`);
+  const imgs = await all('SELECT name, mime, data FROM images');
+  out.images = imgs.map(i => ({ name: i.name, mime: i.mime, data: Buffer.from(i.data).toString('base64') }));
+  res.setHeader('Content-Disposition', `attachment; filename="docbingo-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.json(out);
+}));
+const backupUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
+app.post('/api/restore', adminOnly, backupUpload.single('file'), h(async (req, res) => {
+  if (req.body?.confirm !== 'RESTAURER') return res.status(400).json({ error: 'confirm_required' });
+  let data; try { data = JSON.parse(req.file.buffer.toString('utf8')); } catch { return res.status(400).json({ error: 'invalid_json' }); }
+  if (data?.format !== 'docbingo-backup') return res.status(400).json({ error: 'not_a_backup' });
+  for (const t of [...BACKUP_TABLES].reverse()) await run(`DELETE FROM ${t}`);
+  await run('DELETE FROM images');
+  let rows = 0;
+  for (const t of BACKUP_TABLES) {
+    for (const r of data.tables?.[t] || []) {
+      const cols = Object.keys(r); await run(`INSERT INTO ${t} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`, cols.map(c => r[c])); rows++;
+    }
+  }
+  for (const im of data.images || []) await run('INSERT INTO images (name, mime, data) VALUES (?, ?, ?)', [im.name, im.mime, Buffer.from(im.data, 'base64')]);
+  res.json({ ok: true, rows, images: (data.images || []).length });
+}));
+
 /* ---------- Export ---------- */
 app.get('/api/export', h(async (req, res) => {
   const questions = await allQuestions();

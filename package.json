@@ -1,6 +1,6 @@
 {
   "name": "docbingo",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "DocBingo — plateforme de bingo QCM médical (serious game)",
   "type": "module",
   "scripts": {
@@ -24,5 +24,7 @@
     "playwright": "^1.62.1",
     "svelte": "^5.56.9",
     "vite": "^8.2.1"
-  }
+  },
+  "license": "AGPL-3.0-only",
+  "author": "Jean-Baptiste Kern & co-auteurs"
 }

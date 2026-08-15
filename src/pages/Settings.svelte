@@ -11,6 +11,20 @@
   let newU = { email: '', name: '', role: 'author' };
   let lastTemp = null;
   let pw = { current: '', next: '' }; let pwMsg = '';
+  let restoreFile = null; let restoreConfirm = ''; let restoreBusy = false; let restoreMsg = '';
+  async function dl(url, name) {
+    const tk = localStorage.getItem('docbingo_token');
+    const r = await fetch(url, { headers: tk ? { 'X-DocBingo-Token': tk } : {} });
+    const blob = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  }
+  async function doRestore() {
+    restoreBusy = true; restoreMsg = '';
+    const fd = new FormData(); fd.append('file', restoreFile); fd.append('confirm', restoreConfirm);
+    const tk = localStorage.getItem('docbingo_token');
+    const r = await fetch('/api/restore', { method: 'POST', body: fd, headers: tk ? { 'X-DocBingo-Token': tk } : {} });
+    const d = await r.json(); restoreMsg = d.ok ? $t('settings.restored', { n: d.rows }) : (d.error || 'Erreur');
+    restoreBusy = false; if (d.ok) setTimeout(() => location.reload(), 1500);
+  }
   let collTags = ''; let collFile = null; let collResult = null; let collBusy = false;
   let allTags = [];
   $: isAdmin = user?.role === 'admin';
@@ -198,13 +212,28 @@
 
   <div>
     <label>{$t('settings.help')}</label>
-    <a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a>
+    <div class="row" style="gap:8px"><a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a><a class="btn secondary" href="#/about">ⓘ {$t('about.title')}</a></div>
   </div>
 
   <div>
     <label>{$t('settings.backup')}</label>
-    <a class="btn secondary" href="/api/export" download>⬇ {$t('settings.export')}</a>
-    <div class="muted" style="margin-top:6px">{$t('settings.exporthint')}</div>
+    <div class="row" style="gap:8px">
+      <button class="btn secondary" on:click={() => dl('/api/export', 'docbingo-questions.json')}>⬇ {$t('settings.export')}</button>
+      {#if isAdmin}<button class="btn" on:click={() => dl('/api/backup', 'docbingo-backup-' + new Date().toISOString().slice(0, 10) + '.json')}>⬇ {$t('settings.fullbackup')}</button>{/if}
+    </div>
+    <div class="muted" style="margin-top:6px; line-height:1.5">{$t('settings.backuphint')}</div>
+    {#if isAdmin}
+      <details style="margin-top:10px">
+        <summary class="muted" style="cursor:pointer">{$t('settings.restore')}</summary>
+        <div class="alert error" style="margin:8px 0">⚠️ {$t('settings.restorewarn')}</div>
+        <div class="row" style="gap:8px">
+          <input type="file" accept=".json" on:change={(e) => (restoreFile = e.target.files?.[0] || null)} style="max-width:300px" />
+          <input placeholder="RESTAURER" bind:value={restoreConfirm} style="max-width:140px" />
+          <button class="btn danger small" on:click={doRestore} disabled={!restoreFile || restoreConfirm !== 'RESTAURER' || restoreBusy}>{$t('settings.restorebtn')}</button>
+        </div>
+        {#if restoreMsg}<div class="muted" style="margin-top:6px">{restoreMsg}</div>{/if}
+      </details>
+    {/if}
   </div>
 
   {#if saved}<div class="alert ok">✓ {$t('settings.saved')}</div>{/if}

@@ -16,6 +16,7 @@
   import Review from './pages/Review.svelte';
   import Import from './pages/Import.svelte';
   import Settings from './pages/Settings.svelte';
+  import About from './pages/About.svelte';
 
   let route = { page: 'questions', param: null };
   let settings = { lang: 'fr', theme: 'suisse', sounds: true, animations: true };
@@ -82,9 +83,12 @@
   $: isDisplay = route.page === 'display';
   $: isRemote = route.page === 'remote';
   $: isJoin = route.page === 'join';
+  $: isAbout = route.page === 'about';
 </script>
 
-{#if isJoin}
+{#if isAbout}
+  <div class="shell"><main style="padding-top:20px"><About /><p style="margin-top:16px"><a href="#/home">← DocBingo</a></p></main></div>
+{:else if isJoin}
   <Join codeParam={route.param} />
 {:else if isRemote}
   <Remote sessionId={route.param} />
@@ -104,6 +108,7 @@
       {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{$t('login.error')}</div>{/if}
       <button class="btn" style="margin-top:14px" on:click={doLogin}>{$t('login.enter')}</button>
       <div class="muted" style="margin-top:14px; font-size:12.5px; max-width:300px; line-height:1.5">{$t('login.hint')}</div>
+      <a class="muted" href="#/about" style="margin-top:12px; font-size:12px">{$t('about.title')}</a>
     </div>
   </div>
 {:else if isDisplay}
@@ -129,7 +134,7 @@
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
         <a href="#/stats" class:active={route.page === 'stats'}>{$t('nav.stats')}</a>
         <a href="#/settings" class:active={route.page === 'settings'}>{$t('nav.settings')}</a>
-        {#if user?.id}<button class="userbtn" on:click={logout} title={$t('login.logout')}>{user.name} · {user.role === 'admin' ? $t('role.admin') : $t('role.author')} ⏻</button>{/if}
+        {#if user?.id}<button class="userbtn" on:click={logout} title={(user.role === 'admin' ? $t('role.admin') : $t('role.author')) + ' — ' + $t('login.logout')}><span class="uname">{user.name}</span> ⏻</button>{/if}
       </nav>
     </header>
     {#if user?.mustChange}
@@ -153,12 +158,16 @@
       {:else if route.page === 'stats'}<Stats />
       {:else if route.page === 'review'}<Review on:done={loadMe} />
       {:else if route.page === 'settings'}<Settings {settings} {user} />
+      {:else if route.page === 'about'}<About />
       {:else}<Home {user} />{/if}
     </main>
+    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="/guide.html" target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
   </div>
 {/if}
 
 <style>
+  .foot { border-top: 1px solid var(--border); margin-top: 40px; padding: 14px 0; font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.8; }
+  .foot a { color: var(--ink-dim); }
   .shell { max-width: 1080px; margin: 0 auto; padding: 0 18px 60px; }
   header {
     display: flex; align-items: center; justify-content: space-between;
@@ -177,6 +186,17 @@
   nav a:hover:not(.active) { background: var(--soft); color: var(--soft-ink); }
   .badge { background: var(--accent-2); color: var(--accent-2-ink); border-radius: 999px; padding: 1px 7px; font-size: 11px; margin-left: 3px; }
   .userbtn { border: 1px solid var(--border); background: var(--panel); color: var(--ink-dim); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px; }
+  .uname { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+  @media (max-width: 760px) {
+    .shell { padding: 0 12px 40px; }
+    header { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 0; margin-bottom: 14px; }
+    nav { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    nav::-webkit-scrollbar { display: none; }
+    nav a { padding: 7px 11px; font-size: 13.5px; white-space: nowrap; flex-shrink: 0; }
+    .userbtn { flex-shrink: 0; margin-left: auto; padding: 5px 10px; }
+    .uname { max-width: 90px; }
+    .brand b { font-size: 17px; }
+  }
   .login-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
   .login-box { text-align: center; display: flex; flex-direction: column; align-items: center; padding: 30px; }
   .resume {
