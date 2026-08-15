@@ -1,0 +1,137 @@
+name: Setup infrastructure (Turso + Render)
+
+on:
+  workflow_dispatch:
+    inputs:
+      seed_demo:
+        description: "Charger les 24 questions de démonstration ?"
+        type: boolean
+        default: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Turso — organisation
+        id: org
+        env:
+          TT: ${{ secrets.TURSO_API_TOKEN }}
+        run: |
+          set -e
+          ORGS=$(curl -sf -H "Authorization: Bearer $TT" https://api.turso.tech/v1/organizations)
+          echo "$ORGS" | jq -c '[.[] | {slug, type}]'
+          SLUG=$(echo "$ORGS" | jq -r '.[0].slug')
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+
+      - name: Turso — base de données (région EU)
+        id: db
+        env:
+          TT: ${{ secrets.TURSO_API_TOKEN }}
+          ORG: ${{ steps.org.outputs.slug }}
+        run: |
+          set -e
+          EXISTS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TT" https://api.turso.tech/v1/organizations/$ORG/databases/docbingo)
+          if [ "$EXISTS" != "200" ]; then
+            # Choisir une région européenne disponible
+            LOCS=$(curl -sf -H "Authorization: Bearer $TT" https://api.turso.tech/v1/locations | jq -r '.locations | keys[]')
+            GROUP_LOC=""
+            for l in fra ams cdg arn lhr; do echo "$LOCS" | grep -qx "$l" && GROUP_LOC=$l && break; done
+            [ -z "$GROUP_LOC" ] && GROUP_LOC=$(echo "$LOCS" | head -1)
+            echo "Location: $GROUP_LOC"
+            # Groupe "default" (créé s'il n'existe pas)
+            G=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TT" https://api.turso.tech/v1/organizations/$ORG/groups/default)
+            if [ "$G" != "200" ]; then
+              curl -sf -X POST -H "Authorization: Bearer $TT" -H "Content-Type: application/json" \
+                -d "{\"name\":\"default\",\"location\":\"$GROUP_LOC\"}" \
+                https://api.turso.tech/v1/organizations/$ORG/groups | jq -c '.group | {name, locations}'
+            fi
+            curl -sf -X POST -H "Authorization: Bearer $TT" -H "Content-Type: application/json" \
+              -d '{"name":"docbingo","group":"default"}' \
+              https://api.turso.tech/v1/organizations/$ORG/databases | jq -c '.database | {Name, Hostname}'
+          else
+            echo "Base docbingo déjà existante."
+          fi
+          HOST=$(curl -sf -H "Authorization: Bearer $TT" https://api.turso.tech/v1/organizations/$ORG/databases/docbingo | jq -r '.database.Hostname')
+          echo "url=libsql://$HOST" >> $GITHUB_OUTPUT
+          echo "Base : libsql://$HOST"
+          # Jeton d'accès à la base (sans expiration, lecture/écriture)
+          DBTOKEN=$(curl -sf -X POST -H "Authorization: Bearer $TT" \
+            "https://api.turso.tech/v1/organizations/$ORG/databases/docbingo/auth/tokens?expiration=never&authorization=full-access" | jq -r '.jwt')
+          echo "::add-mask::$DBTOKEN"
+          echo "token=$DBTOKEN" >> $GITHUB_OUTPUT
+
+      - name: Render — service web (plan gratuit, Francfort)
+        id: render
+        env:
+          RK: ${{ secrets.RENDER_API_KEY }}
+          DB_URL: ${{ steps.db.outputs.url }}
+          DB_TOKEN: ${{ steps.db.outputs.token }}
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+        run: |
+          set -e
+          OWNER=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/owners?limit=20" | jq -r '.[0].owner.id')
+          echo "Owner: $OWNER"
+          EXISTING=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?name=docbingo&limit=5" | jq -r '.[0].service.id // empty')
+          ENVVARS=$(jq -nc --arg u "$DB_URL" --arg t "$DB_TOKEN" --arg p "$PW" \
+            '[{key:"TURSO_DATABASE_URL",value:$u},{key:"TURSO_AUTH_TOKEN",value:$t},{key:"DOCBINGO_PASSWORD",value:$p},{key:"NODE_VERSION",value:"22"}]')
+          if [ -z "$EXISTING" ]; then
+            BODY=$(jq -nc --arg o "$OWNER" --argjson env "$ENVVARS" '{
+              type:"web_service", name:"docbingo", ownerId:$o,
+              repo:"https://github.com/jbkern/docbingo", branch:"main", autoDeploy:"yes",
+              envVars:$env,
+              serviceDetails:{ runtime:"node", plan:"free", region:"frankfurt",
+                envSpecificDetails:{ buildCommand:"npm install && npm run build", startCommand:"npm start" },
+                healthCheckPath:"/api/ping" } }')
+            RESP=$(curl -s -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d "$BODY" https://api.render.com/v1/services)
+            echo "$RESP" | jq -c 'if .service then {id:.service.id, url:.service.serviceDetails.url} else . end'
+            SID=$(echo "$RESP" | jq -r '.service.id // empty')
+            [ -z "$SID" ] && { echo "Échec de création du service"; exit 1; }
+          else
+            SID=$EXISTING
+            echo "Service existant : $SID — mise à jour des variables"
+            curl -sf -X PUT -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d "$ENVVARS" "https://api.render.com/v1/services/$SID/env-vars" >/dev/null
+            curl -sf -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d '{}' "https://api.render.com/v1/services/$SID/deploys" >/dev/null
+          fi
+          URL=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID" | jq -r '.serviceDetails.url')
+          echo "sid=$SID" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "### 🚀 DocBingo" >> $GITHUB_STEP_SUMMARY
+          echo "- Service Render : \`$SID\`" >> $GITHUB_STEP_SUMMARY
+          echo "- URL : $URL" >> $GITHUB_STEP_SUMMARY
+          echo "- Base Turso : $DB_URL" >> $GITHUB_STEP_SUMMARY
+
+      - name: Attendre le premier déploiement
+        env:
+          RK: ${{ secrets.RENDER_API_KEY }}
+          SID: ${{ steps.render.outputs.sid }}
+          URL: ${{ steps.render.outputs.url }}
+        run: |
+          for i in $(seq 1 60); do
+            ST=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/deploys?limit=1" | jq -r '.[0].deploy.status')
+            echo "[$i] deploy: $ST"
+            case "$ST" in
+              live) break ;;
+              build_failed|update_failed|canceled|deactivated) echo "Déploiement en échec : $ST"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          curl -sf "$URL/api/ping" && echo " ← ping OK"
+
+      - name: Charger la base de démonstration
+        if: ${{ inputs.seed_demo }}
+        env:
+          URL: ${{ steps.render.outputs.url }}
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+        run: |
+          set -e
+          TOKEN=$(curl -sf -X POST -H "Content-Type: application/json" -d "{\"password\":\"$PW\"}" "$URL/api/login" | jq -r '.token')
+          COUNT=$(curl -sf -H "X-DocBingo-Token: $TOKEN" "$URL/api/questions" | jq 'length')
+          if [ "$COUNT" = "0" ]; then
+            sed "s#http://localhost:3001/api#$URL/api#" scripts/seed.js > /tmp/seed.js
+            sed -i "s#headers: { 'Content-Type': 'application/json' }#headers: { 'Content-Type': 'application/json', 'X-DocBingo-Token': '$TOKEN' }#" /tmp/seed.js
+            node /tmp/seed.js
+          else
+            echo "Base déjà peuplée ($COUNT questions) — seed ignoré."
+          fi
