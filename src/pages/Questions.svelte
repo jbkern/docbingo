@@ -8,6 +8,7 @@
   let search = '';
   let selectedTags = [];
   let logic = 'or';
+  let difficulty = '';
   let loading = true;
 
   async function load() {
@@ -15,6 +16,7 @@
     const qs = new URLSearchParams();
     if (search) qs.set('search', search);
     if (selectedTags.length) { qs.set('tags', selectedTags.join(',')); qs.set('logic', logic); }
+    if (difficulty) qs.set('difficulty', difficulty);
     [questions, allTags] = await Promise.all([
       api.get('/api/questions?' + qs.toString()),
       api.get('/api/tags')
@@ -43,12 +45,17 @@
 
 <div class="row" style="margin-bottom:16px">
   <h1 class="grow">{$t('questions.title')} <span class="muted">({questions.length})</span></h1>
+  <a class="btn secondary" href="#/import">⬆ {$t('nav.import')}</a>
   <a class="btn" href="#/question/new">＋ {$t('questions.new')}</a>
 </div>
 
 <div class="card" style="margin-bottom:16px">
   <div class="row">
     <input class="grow" placeholder={$t('common.search')} bind:value={search} on:input={onSearch} style="max-width:340px" />
+    <select bind:value={difficulty} on:change={load} style="width:auto">
+      <option value="">{$t('diff.all')}</option>
+      <option value="1">{$t('diff.1')}</option><option value="2">{$t('diff.2')}</option><option value="3">{$t('diff.3')}</option>
+    </select>
     {#if selectedTags.length > 1}
       <select bind:value={logic} on:change={load} style="width:auto">
         <option value="or">{$t('logic.or')}</option>
@@ -81,6 +88,8 @@
           <div class="meta">
             <span class="badge-ok">✓ {letters(q)}</span>
             {#if q.correct.length > 1}<span class="badge-multi">multi</span>{/if}
+            <span class="badge-diff d{q.difficulty}" title={$t('diff.' + q.difficulty)}>{'●'.repeat(q.difficulty)}{'○'.repeat(3 - q.difficulty)}</span>
+            {#if q.caseId}<span class="badge-case">🩺 {$t('q.casebadge')}</span>{/if}
             {#if q.image}<span>🖼️</span>{/if}
             {#each q.tags as tg}<span class="tag">#{tg}</span>{/each}
             {#if q.usedCount}<span class="muted">{q.usedCount}× {$t('questions.used')}</span>{/if}
@@ -102,6 +111,9 @@
   .statement { font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
   .meta { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; font-size: 12.5px; }
   .badge-ok { background: color-mix(in srgb, var(--ok) 18%, var(--panel)); color: var(--ink); border-radius: 999px; padding: 3px 10px; font-weight: 800; }
+  .badge-diff { font-size: 11px; letter-spacing: 1px; color: var(--ink-dim); }
+  .badge-diff.d3 { color: var(--danger); } .badge-diff.d1 { color: var(--ok); }
+  .badge-case { background: var(--soft); color: var(--soft-ink); border-radius: 999px; padding: 3px 9px; font-weight: 700; font-size: 11px; }
   .badge-multi { background: var(--accent-2); color: var(--accent-2-ink); border-radius: 999px; padding: 3px 9px; font-weight: 800; font-size: 11px; }
   .actions { display: flex; gap: 6px; flex-shrink: 0; }
   @media (max-width: 720px) { .qcard { flex-direction: column; } }

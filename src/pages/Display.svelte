@@ -4,6 +4,8 @@
   import { api } from '../lib/api.js';
   import { createChannel } from '../lib/sync.js';
   import Projection from '../components/Projection.svelte';
+  import Slide from '../components/Slide.svelte';
+  import { play as playSound } from '../lib/sound.js';
 
   export let sessionId;
   export let settings = { sounds: true, animations: true };
@@ -29,27 +31,14 @@
     if (msg.type !== 'state') return;
     connected = true;
     st = msg.st;
-    if (msg.event === 'reveal') { ding(660, .12); setTimeout(() => ding(880, .12), 130); }
+    const amb = s?.params?.ambiance || settings.ambiance || 'classic';
+    if (msg.event === 'reveal' && soundsOn) playSound(amb, 'reveal');
     if (msg.event === 'bingo' || msg.event === 'finish') {
       if (effectsOn) blastConfetti();
-      jingle();
+      if (soundsOn) playSound(amb, msg.event === 'bingo' ? 'bingo' : 'end');
     }
   }
 
-  let audioCtx = null;
-  function ding(freq, dur) {
-    if (!soundsOn) return;
-    try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.frequency.value = freq; o.type = 'triangle';
-      g.gain.setValueAtTime(.25, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur + .15);
-      o.connect(g).connect(audioCtx.destination);
-      o.start(); o.stop(audioCtx.currentTime + dur + .2);
-    } catch {}
-  }
-  function jingle() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => setTimeout(() => ding(f, .15), i * 140)); }
   function blastConfetti() {
     confetti = Array.from({ length: 110 }, (_, i) => ({
       id: Math.random(), x: Math.random() * 100, delay: Math.random() * .8,
@@ -83,6 +72,8 @@
       {/if}
     </div>
   </div>
+{:else if st.slide}
+  <Slide slide={st.slide} sessionName={s.name} />
 {:else}
   <div class="dispwrap">
     <Projection {s} idx={st.idx} phase={st.phase} secondsLeft={st.secondsLeft} paused={st.paused} {effectsOn} />

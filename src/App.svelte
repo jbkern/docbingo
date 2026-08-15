@@ -9,6 +9,8 @@
   import SessionDetail from './pages/SessionDetail.svelte';
   import Play from './pages/Play.svelte';
   import Display from './pages/Display.svelte';
+  import Remote from './pages/Remote.svelte';
+  import Import from './pages/Import.svelte';
   import Settings from './pages/Settings.svelte';
 
   let route = { page: 'questions', param: null };
@@ -67,9 +69,12 @@
 
   $: isPlay = route.page === 'play';
   $: isDisplay = route.page === 'display';
+  $: isRemote = route.page === 'remote';
 </script>
 
-{#if needLogin}
+{#if isRemote}
+  <Remote sessionId={route.param} />
+{:else if needLogin}
   <div class="login-bg">
     <div class="login-box">
       <svg width="46" height="46" viewBox="0 0 100 100">
@@ -102,7 +107,7 @@
         <span><b>DocBingo</b><small>{$t('app.tagline')}</small></span>
       </a>
       <nav>
-        <a href="#/questions" class:active={route.page === 'questions' || route.page === 'question'}>{$t('nav.questions')}</a>
+        <a href="#/questions" class:active={['questions', 'question', 'import'].includes(route.page)}>{$t('nav.questions')}</a>
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
         <a href="#/settings" class:active={route.page === 'settings'}>{$t('nav.settings')}</a>
       </nav>
@@ -117,6 +122,7 @@
     <main>
       {#if route.page === 'questions'}<Questions />
       {:else if route.page === 'question'}<QuestionForm id={route.param} />
+      {:else if route.page === 'import'}<Import />
       {:else if route.page === 'sessions'}<Sessions />
       {:else if route.page === 'session-new'}<SessionNew />
       {:else if route.page === 'session'}<SessionDetail id={route.param} />

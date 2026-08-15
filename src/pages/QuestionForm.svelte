@@ -5,8 +5,15 @@
 
   export let id; // 'new' or question id
 
-  let q = { statement: '', options: ['', '', '', ''], correct: [], image: null, explanation: '', tags: [] };
+  let q = { statement: '', options: ['', '', '', ''], correct: [], image: null, explanation: '', tags: [], difficulty: 2, caseId: null, caseOrder: 0 };
   let allTags = [];
+  let cases = [];
+  let newCaseTitle = '';
+  async function createCase() {
+    if (!newCaseTitle.trim()) return;
+    const c = await api.post('/api/cases', { title: newCaseTitle });
+    cases = [...cases, c]; q.caseId = c.id; newCaseTitle = '';
+  }
   let tagInput = '';
   let error = '';
   let duplicates = [];
@@ -14,7 +21,7 @@
   let isNew = true;
 
   onMount(async () => {
-    allTags = await api.get('/api/tags');
+    [allTags, cases] = await Promise.all([api.get('/api/tags'), api.get('/api/cases')]);
     if (id && id !== 'new') {
       isNew = false;
       q = await api.get('/api/questions/' + id);
@@ -139,6 +146,36 @@
     <label for="ex">{$t('q.explanation')}</label>
     <textarea id="ex" rows="2" bind:value={q.explanation}
       placeholder={$t('q.explph')}></textarea>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:24px">
+    <div>
+      <label>{$t('q.difficulty')}</label>
+      <div class="row" style="gap:6px">
+        {#each [1, 2, 3] as d}
+          <button class="btn small" class:secondary={q.difficulty !== d} on:click={() => (q.difficulty = d)}>{$t('diff.' + d)}</button>
+        {/each}
+      </div>
+    </div>
+    <div class="grow">
+      <label for="cs">{$t('q.case')}</label>
+      <div class="row" style="gap:8px">
+        <select id="cs" bind:value={q.caseId} style="max-width:320px">
+          <option value={null}>— {$t('q.nocase')} —</option>
+          {#each cases as c}<option value={c.id}>{c.title}</option>{/each}
+        </select>
+        {#if q.caseId}
+          <label style="margin:0; text-transform:none; width:auto">{$t('q.caseorder')}</label>
+          <input type="number" min="1" max="20" value={q.caseOrder || 1} on:input={(e) => (q.caseOrder = Number(e.target.value))} style="width:70px" />
+        {/if}
+      </div>
+      <div class="row" style="gap:6px; margin-top:6px">
+        <input placeholder={$t('q.newcaseph')} bind:value={newCaseTitle} style="max-width:320px"
+          on:keydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createCase(); } }} />
+        <button class="btn small secondary" on:click={createCase} disabled={!newCaseTitle.trim()}>＋ {$t('q.newcase')}</button>
+      </div>
+      <div class="muted" style="margin-top:4px">{$t('q.casehint')}</div>
+    </div>
   </div>
 
   <div>

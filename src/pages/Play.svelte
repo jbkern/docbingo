@@ -3,7 +3,9 @@
   import { t } from '../lib/i18n.js';
   import { api } from '../lib/api.js';
   import { createChannel } from '../lib/sync.js';
+  import { play as playSound } from '../lib/sound.js';
   import Projection from '../components/Projection.svelte';
+  import Slide from '../components/Slide.svelte';
 
   export let sessionId;
   export let settings = { sounds: true, animations: true };
@@ -26,6 +28,12 @@
   let raceStats = null;
   let showRace = true;
   let channel = null;
+  let slide = null;          // diapositive libre en cours (affichée entre deux questions)
+  let remoteCode = null;
+  let remoteSrc = null;
+  let remoteOnline = false;
+  $: ambiance = s?.params?.ambiance || settings.ambiance || 'classic';
+  $: pendingSlides = s ? (s.slides || []) : [];
 
   $: q = s && idx >= 0 ? s.questions[idx] : null;
   $: nextQ = s && idx + 1 < N ? s.questions[idx + 1] : null;
@@ -51,8 +59,54 @@
     }
     window.addEventListener('keydown', onKey);
     refreshRace();
+    // Télécommande : code + flux d'événements
+    try {
+      const rc = await api.get(`/api/sessions/${sessionId}/remote-code`);
+      remoteCode = rc.code || (await api.post(`/api/sessions/${sessionId}/remote-code`)).code;
+      listenRemote();
+    } catch {}
+    // Diapositive « avant la première question »
+    if (phase === 'intro') { /* affichée au start() */ }
   });
-  onDestroy(() => { clearInterval(timerId); window.removeEventListener('keydown', onKey); channel?.close(); });
+  onDestroy(() => { clearInterval(timerId); window.removeEventListener('keydown', onKey); channel?.close(); remoteSrc?.close(); });
+
+  function listenRemote() {
+    const tk = localStorage.getItem('docbingo_token');
+    // EventSource ne permet pas d'en-tête : le token passe en query, vérifié côté serveur via le middleware ? → on utilise fetch streaming
+    remoteSrc = { close: () => { remoteAbort?.abort(); } };
+    let remoteAbort = new AbortController();
+    (async () => {
+      while (!remoteAbort.signal.aborted) {
+        try {
+          const res = await fetch(`/api/sessions/${sessionId}/remote-events`, { headers: tk ? { 'X-DocBingo-Token': tk } : {}, signal: remoteAbort.signal });
+          const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+          remoteOnline = true;
+          while (true) {
+            const { value, done } = await reader.read(); if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let idx;
+            while ((idx = buf.indexOf('\n\n')) >= 0) {
+              const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+              const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = /data: (.*)/.exec(chunk)?.[1];
+              if (ev === 'cmd' && data) onRemoteCmd(JSON.parse(data));
+            }
+          }
+        } catch {}
+        remoteOnline = false;
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    })();
+  }
+  function onRemoteCmd({ cmd, arg }) {
+    if (cmd === 'next') advance();
+    else if (cmd === 'reveal') reveal();
+    else if (cmd === 'prev') prev();
+    else if (cmd === 'pause') paused = !paused;
+    else if (cmd === 'plus15') secondsLeft += 15;
+    else if (cmd === 'bingo') { verifyOpen = true; paused = true; if (arg) { verifyCode = String(arg); verify(); } }
+    else if (cmd === 'closeslide') closeSlide();
+  }
+  async function newRemoteCode() { remoteCode = (await api.post(`/api/sessions/${sessionId}/remote-code`)).code; }
 
   /* ---------- Double écran ---------- */
   function onChannelMessage(msg) {
@@ -62,7 +116,7 @@
   function broadcast(eventName) {
     channel?.send({
       type: 'state',
-      st: { idx, phase, secondsLeft, paused, winners, announceCode: announce?.code || null },
+      st: { idx, phase, secondsLeft, paused, winners, announceCode: announce?.code || null, slide },
       event: eventName || null
     });
   }
@@ -71,7 +125,7 @@
     window.open(location.origin + location.pathname + '#/display/' + sessionId, 'docbingo-display-' + sessionId,
       'width=1280,height=800');
   }
-  $: (idx, phase, secondsLeft, paused, winners, announce, channel && broadcast());
+  $: (idx, phase, secondsLeft, paused, winners, announce, slide, channel && broadcast());
 
   /* ---------- Timer ---------- */
   function startTimer(seconds) {
@@ -81,32 +135,51 @@
     timerId = setInterval(() => {
       if (paused) return;
       secondsLeft--;
+      if (secondsLeft <= 5 && secondsLeft > 0) sfx('tick');
       if (secondsLeft % 10 === 0) save();
       if (secondsLeft <= 0) reveal();
     }, 1000);
   }
 
   /* ---------- Flow ---------- */
-  function start() { idx = 0; phase = 'question'; startTimer(s.params.secondsPerQuestion); save('running'); ding(440, .08); refreshRace(); }
+  function slidesAfter(i) { return pendingSlides.filter(sl => sl.afterIndex === i); }
+  let slideQueue = [];
+  function showSlides(list, then) {
+    if (!list.length) return then();
+    slideQueue = [...list]; slideNext = then; slide = slideQueue.shift(); paused = true; broadcast();
+  }
+  let slideNext = null;
+  function closeSlide() {
+    if (slideQueue.length) { slide = slideQueue.shift(); broadcast(); return; }
+    slide = null; paused = false; const f = slideNext; slideNext = null; broadcast(); f && f();
+  }
+  function start() {
+    showSlides(slidesAfter(-1), () => {
+      idx = 0; phase = 'question'; startTimer(s.params.secondsPerQuestion); save('running'); sfx('draw'); refreshRace();
+    });
+  }
   function reveal() {
+    if (phase !== 'question') return;
     clearInterval(timerId);
     phase = 'revealed';
-    ding(660, .12); setTimeout(() => ding(880, .12), 130);
+    sfx('reveal');
     broadcast('reveal');
     save();
     refreshRace();
   }
   function advance() {
+    if (slide) return closeSlide();
     if (phase === 'intro') return start();
     if (phase === 'question') return reveal();
     if (phase === 'revealed') {
-      if (idx + 1 >= N) return finish();
-      idx++;
-      phase = 'question';
-      startTimer(s.params.secondsPerQuestion);
-      save();
+      const goNext = () => {
+        if (idx + 1 >= N) return finish();
+        idx++; phase = 'question'; startTimer(s.params.secondsPerQuestion); save(); sfx('draw');
+      };
+      showSlides(slidesAfter(idx), goNext);
     }
   }
+  function sfx(ev) { if (soundsOn) playSound(ambiance, ev); }
   function prev() {
     if (idx <= 0 || phase === 'done') return;
     clearInterval(timerId);
@@ -119,7 +192,7 @@
     save('done');
     if (effectsOn) blastConfetti();
     broadcast('finish');
-    jingle();
+    sfx('end');
   }
   function onKey(e) {
     if (verifyOpen) { if (e.key === 'Escape') verifyOpen = false; return; }
@@ -156,26 +229,12 @@
     announce = winners[winners.length - 1];
     if (effectsOn) blastConfetti();
     broadcast('bingo');
-    jingle();
+    sfx('bingo');
     save();
     setTimeout(() => { announce = null; }, 6000);
   }
 
   /* ---------- Effects ---------- */
-  let audioCtx = null;
-  function ding(freq, dur) {
-    if (!soundsOn) return;
-    try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.frequency.value = freq; o.type = 'triangle';
-      g.gain.setValueAtTime(.25, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur + .15);
-      o.connect(g).connect(audioCtx.destination);
-      o.start(); o.stop(audioCtx.currentTime + dur + .2);
-    } catch {}
-  }
-  function jingle() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => setTimeout(() => ding(f, .15), i * 140)); }
   function blastConfetti() {
     confetti = Array.from({ length: 90 }, (_, i) => ({
       id: Math.random(), x: Math.random() * 100, delay: Math.random() * .8,
@@ -230,7 +289,7 @@
 {:else if !presenterMode}
   <!-- ============ MODE SIMPLE ÉCRAN ============ -->
   <div class="solo">
-    <Projection {s} {idx} {phase} {secondsLeft} {paused} {effectsOn} />
+    {#if slide}<Slide {slide} sessionName={s.name} />{:else}<Projection {s} {idx} {phase} {secondsLeft} {paused} {effectsOn} />{/if}
     <div class="p-controls">
       <button on:click={() => (paused = !paused)} title="Pause (P)">{paused ? '▶' : '⏸'}</button>
       <button on:click={() => (secondsLeft += 15)} disabled={phase !== 'question'}>＋15 s</button>
@@ -255,6 +314,9 @@
       <span class="disp-dot" class:on={displayConnected} title={displayConnected ? $t('pres.displayon') : $t('pres.displayoff')}>🖥️</span>
     </div>
 
+    {#if slide}
+      <div class="alert warn" style="margin-bottom:12px">🎬 {$t('pres.slideon')} <b>{slide.title || $t('slide.' + slide.type)}</b> — <button class="btn small" on:click={closeSlide}>⏭ {$t('pres.slidenext')}</button></div>
+    {/if}
     <div class="c-grid">
       <div class="c-left">
         <div class="card">
@@ -314,6 +376,16 @@
             {#each Array(N) as _, i}
               <span class="chip" class:asked={i < idx} class:current={i === idx}>{i + 1}</span>
             {/each}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="panel-title">📱 {$t('pres.remote')} <span class="tag" style="margin-left:auto; background:{remoteOnline ? 'var(--ok)' : 'var(--soft)'}; color:{remoteOnline ? 'var(--ok-ink)' : 'var(--soft-ink)'}">{remoteOnline ? $t('pres.remoteon') : $t('pres.remoteoff')}</span></div>
+          <div class="muted" style="font-size:13px; line-height:1.6">
+            {$t('pres.remotehelp')}<br>
+            <span class="url">{location.origin}{location.pathname}#/remote/{sessionId}</span><br>
+            {$t('pres.remotecode')} : <b style="font-size:22px; letter-spacing:.15em; color:var(--accent-2)">{remoteCode || '…'}</b>
+            <button class="btn small secondary" on:click={newRemoteCode} title={$t('pres.remotenew')}>⟳</button>
           </div>
         </div>
 
@@ -449,6 +521,7 @@
   .mini-timer.pausedc { opacity: .5; }
   .disp-dot { opacity: .3; }
   .disp-dot.on { opacity: 1; filter: drop-shadow(0 0 4px var(--ok)); }
+  .url { font-family: ui-monospace, monospace; font-size: 12px; background: var(--soft); padding: 2px 6px; border-radius: 5px; word-break: break-all; }
   .c-grid { display: grid; grid-template-columns: 1.25fr .95fr; gap: 14px; align-items: start; }
   .c-left, .c-right { display: flex; flex-direction: column; gap: 14px; }
   .panel-title {

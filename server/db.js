@@ -85,6 +85,25 @@ export async function initSchema() {
     )`
   ];
   for (const sql of stmts) await db.execute(sql);
+
+  /* Migrations additives (idempotentes) */
+  const cols = async (table) => (await db.execute(`PRAGMA table_info(${table})`)).rows.map(r => r.name);
+  const addCol = async (table, col, def) => { if (!(await cols(table)).includes(col)) await db.execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); };
+  await addCol('questions', 'difficulty', "INTEGER DEFAULT 2");          // 1 facile · 2 moyen · 3 difficile
+  await addCol('questions', 'case_id', "INTEGER");                        // cas clinique (clinical_cases.id)
+  await addCol('questions', 'case_order', "INTEGER DEFAULT 0");           // ordre dans le cas
+  await addCol('sessions', 'slides', "TEXT DEFAULT '[]'");                // diapositives libres [{afterIndex, type, title, text}]
+  await db.execute(`CREATE TABLE IF NOT EXISTS clinical_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    intro TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS remote_codes (
+    session_id INTEGER PRIMARY KEY,
+    code TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
 }
 
 export async function getSetting(key, fallback = null) {

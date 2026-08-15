@@ -1,10 +1,21 @@
 <script>
-  import { t } from '../lib/i18n.js';
+  import { onMount } from 'svelte';
+  import { t, lang } from '../lib/i18n.js';
   import { api } from '../lib/api.js';
+  import { AMBIANCES, play } from '../lib/sound.js';
 
   export let settings;
-  let local = { ...settings };
+  let local = { ambiance: 'classic', ...settings };
   let saved = false;
+  let aiEnabled = false;
+  let aiKey = '';
+  let aiSaved = false;
+  onMount(async () => { aiEnabled = (await api.get('/api/ai/status')).enabled; });
+  async function saveKey() {
+    const r = await api.put('/api/ai/key', { key: aiKey });
+    aiEnabled = r.enabled; aiKey = ''; aiSaved = true; setTimeout(() => (aiSaved = false), 1800);
+  }
+  async function removeKey() { const r = await api.put('/api/ai/key', { key: '' }); aiEnabled = r.enabled; }
 
   const themes = [
     { id: 'suisse', colors: ['#f7f7f5', '#16324f', '#e63946'] },
@@ -57,6 +68,36 @@
     <label class="row" style="gap:8px; text-transform:none; font-size:14.5px; width:auto; margin:0">
       <input type="checkbox" bind:checked={local.animations} on:change={save} style="width:auto" /> {$t('settings.animations')}
     </label>
+  </div>
+
+  <div>
+    <label>{$t('settings.ambiance')}</label>
+    <div class="row" style="gap:8px">
+      {#each Object.entries(AMBIANCES) as [id, a]}
+        <button class="btn small" class:secondary={local.ambiance !== id} on:click={() => { local.ambiance = id; save(); play(id, 'reveal'); }}>{a.name[$lang] || a.name.fr}</button>
+      {/each}
+      <button class="btn small secondary" on:click={() => play(local.ambiance, 'bingo')}>▶ {$t('settings.preview')}</button>
+    </div>
+    <div class="muted" style="margin-top:5px">{$t('settings.ambiancehint')}</div>
+  </div>
+
+  <div>
+    <label>{$t('settings.ai')}</label>
+    {#if aiEnabled}
+      <div class="alert ok" style="margin-bottom:8px">✓ {$t('settings.aion')} <button class="btn small secondary" style="margin-left:auto" on:click={removeKey}>{$t('settings.airemove')}</button></div>
+    {:else}
+      <div class="muted" style="margin-bottom:8px; line-height:1.5">{$t('settings.aihelp')}</div>
+    {/if}
+    <div class="row" style="gap:8px">
+      <input type="password" bind:value={aiKey} placeholder="sk-ant-…" style="max-width:340px" autocomplete="off" />
+      <button class="btn small" on:click={saveKey} disabled={!aiKey.trim()}>{aiEnabled ? $t('settings.aireplace') : $t('settings.aisave')}</button>
+      {#if aiSaved}<span class="muted">✓</span>{/if}
+    </div>
+  </div>
+
+  <div>
+    <label>{$t('settings.help')}</label>
+    <a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a>
   </div>
 
   <div>

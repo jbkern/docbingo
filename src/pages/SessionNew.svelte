@@ -18,6 +18,7 @@
   let excludeRecent = false;
   let gridSize = 0;               // 0 = auto (recommended)
   let notes = '';
+  let difficultyMode = 'any';
   let sounds = true;
   let animations = true;
   let plan = null;
@@ -43,7 +44,7 @@
           logic: tagLogic,
           count: sizing === 'count' ? questionCount : null,
           durationMin: sizing === 'duration' ? durationMin : null,
-          secondsPerQuestion, marking, excludeRecent, participants
+          secondsPerQuestion, marking, excludeRecent, participants, difficultyMode
         });
       } catch (e) { plan = null; }
       planning = false;
@@ -63,7 +64,7 @@
           mode, tags: mode === 'theme' ? tags : [], tagLogic,
           questionCount: plan.questionCount, secondsPerQuestion,
           participants, gridSize: effectiveGrid, marking, afterBingoDefault,
-          excludeRecent, reservePct: 10, notes: notes.trim() || null, sounds, animations
+          excludeRecent, reservePct: 10, notes: notes.trim() || null, sounds, animations, difficultyMode
         }
       });
       location.hash = '#/session/' + s.id;
@@ -138,6 +139,18 @@
         <div><label for="pp" style="text-transform:none">{$t('snew.participants')}</label>
           <input id="pp" type="number" min="1" max="500" bind:value={participants} style="width:100px" /></div>
       </div>
+    </div>
+
+    <div>
+      <label>{$t('snew.difficulty')}</label>
+      <div class="row" style="gap:6px">
+        {#each ['any', 'balanced', 'progressive', '1', '2', '3'] as m}
+          <button class="btn small" class:secondary={difficultyMode !== m} on:click={() => { difficultyMode = m; refreshPlan(); }}>{$t('diffmode.' + m)}</button>
+        {/each}
+      </div>
+      {#if plan?.byDifficulty}
+        <div class="muted" style="margin-top:6px">{$t('diff.1')} : {plan.byDifficulty[1]} · {$t('diff.2')} : {plan.byDifficulty[2]} · {$t('diff.3')} : {plan.byDifficulty[3]} — {$t('snew.caseshint')}</div>
+      {/if}
     </div>
 
     <div>
