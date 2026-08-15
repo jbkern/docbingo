@@ -8,6 +8,8 @@ const fr = {
   'login.forgotfail': 'Envoi impossible pour le moment, réessayez ou contactez un administrateur.',
   'login.resettitle': 'Choisissez un nouveau mot de passe', 'login.pwrepeat': 'Répéter le mot de passe', 'login.pwmismatch': 'Les deux mots de passe diffèrent', 'login.resetbtn': 'Enregistrer et se connecter', 'login.resetexpired': 'Lien invalide ou expiré — refaites une demande.',
 
+  'demo.title': 'Vidéo de démonstration', 'demo.help': 'Un tour d\'horizon de DocBingo en moins de trois minutes : banque de questions, import et IA, création de session, animation avec smartphones, mode présentateur, statistiques et réglages. Réservée aux personnes connectées.', 'demo.note': 'Vidéo enregistrée sur une base de démonstration ; les données affichées sont fictives.', 'demo.chapters': 'Chapitres',
+  'charter.title': 'Charte d\'utilisation', 'charter.link': 'Lire la charte d\'utilisation', 'charter.reminder': 'Rappel : aucune donnée identifiante (patient·es, proches, collègues), supports visuels anonymisés et libres de droits, contenu respectueux et sourcé. L\'auteur·e est seul·e responsable de sa contribution.', 'charter.ai': 'Les questions générées par IA doivent être relues et validées ; ne transmettez jamais de données de patient·es à l\'IA.', 'charter.joinnote': 'Pseudonyme uniquement, pas de nom complet. Jouons dans la bienveillance et l\'esprit du jeu 🙂', 'charter.aboutdesc': 'La charte fixe le cadre légal, éthique et pédagogique de DocBingo : données non identifiantes, droits d\'auteur des supports, contenus appropriés, usage de l\'IA, responsabilité, bienveillance et langage inclusif. Son acceptation est demandée à chaque compte.',
   'about.title': 'À propos & mentions légales', 'about.coauthors': 'co-auteurs',
   'about.ip': 'Propriété intellectuelle', 'about.ipdesc': 'DocBingo a été conçu et dirigé par Jean-Baptiste Kern et développé avec l\'assistance de Claude (Anthropic). Les questions, explications et illustrations appartiennent à leurs auteurs respectifs.',
   'about.software': 'Logiciel', 'about.softwaredesc': 'Le code source de DocBingo est un logiciel libre distribué sous licence GNU Affero General Public License v3.0 : vous pouvez l\'utiliser, l\'étudier, le modifier et le redistribuer, à condition de conserver cette mention et de publier le code de toute version modifiée mise à disposition en ligne, sous la même licence.',
@@ -109,6 +111,7 @@ const fr = {
   'nav.questions': 'Questions', 'nav.sessions': 'Sessions', 'nav.settings': 'Réglages',
   'common.save': 'Enregistrer', 'common.cancel': 'Annuler', 'common.delete': 'Supprimer',
   'common.edit': 'Modifier', 'common.duplicate': 'Dupliquer', 'common.details': 'Détails',
+  'install.title': 'Installer DocBingo sur l\'écran d\'accueil', 'install.help': 'L\'application s\'ouvre en plein écran, comme une app — idéal pour la télécommande et le boîtier de vote.', 'install.ios': 'Sur iPhone/iPad : bouton Partager, puis « Sur l\'écran d\'accueil ».', 'install.btn': 'Installer', 'common.close': 'Fermer',
   'common.loading': 'Chargement…', 'common.search': 'Rechercher…',
   'logic.or': 'au moins un mot-clé (OU)', 'logic.and': 'tous les mots-clés (ET)',
 
@@ -214,6 +217,8 @@ const en = {
   'login.forgotfail': 'Could not send right now, try again or contact an administrator.',
   'login.resettitle': 'Choose a new password', 'login.pwrepeat': 'Repeat password', 'login.pwmismatch': 'Passwords differ', 'login.resetbtn': 'Save and sign in', 'login.resetexpired': 'Invalid or expired link — request a new one.',
 
+  'demo.title': 'Demo video', 'demo.help': 'A tour of DocBingo in under three minutes: question bank, import and AI, session setup, live play with smartphones, presenter mode, statistics and settings. Available to signed-in users only.', 'demo.note': 'Recorded on a demo database; all data shown is fictitious. Subtitles in French.', 'demo.chapters': 'Chapters',
+  'charter.title': 'Terms of use', 'charter.link': 'Read the terms of use', 'charter.reminder': 'Reminder: no identifying data (patients, relatives, colleagues), anonymised and rights-cleared visual material, respectful and sourced content. The author is solely responsible for their contribution.', 'charter.ai': 'AI-generated questions must be reviewed and validated; never send patient data to the AI.', 'charter.joinnote': 'Nickname only, no full name. Let\'s play kindly and in the spirit of the game 🙂', 'charter.aboutdesc': 'The terms set DocBingo\'s legal, ethical and educational framework: non-identifying data, copyright of visual material, appropriate content, AI use, liability, kindness and inclusive language. Every account is asked to accept them.',
   'about.title': 'About & legal notice', 'about.coauthors': 'co-authors',
   'about.ip': 'Intellectual property', 'about.ipdesc': 'DocBingo was designed and led by Jean-Baptiste Kern and developed with the assistance of Claude (Anthropic). Questions, explanations and illustrations belong to their respective authors.',
   'about.software': 'Software', 'about.softwaredesc': 'DocBingo\'s source code is free software under the GNU Affero General Public License v3.0: you may use, study, modify and redistribute it, provided you keep this notice and publish the source of any modified version made available online, under the same licence.',
@@ -315,6 +320,7 @@ const en = {
   'nav.questions': 'Questions', 'nav.sessions': 'Sessions', 'nav.settings': 'Settings',
   'common.save': 'Save', 'common.cancel': 'Cancel', 'common.delete': 'Delete',
   'common.edit': 'Edit', 'common.duplicate': 'Duplicate', 'common.details': 'Details',
+  'install.title': 'Add DocBingo to your home screen', 'install.help': 'Opens full screen like a native app — handy for the remote and the voting pad.', 'install.ios': 'On iPhone/iPad: tap Share, then “Add to Home Screen”.', 'install.btn': 'Install', 'common.close': 'Close',
   'common.loading': 'Loading…', 'common.search': 'Search…',
   'logic.or': 'at least one keyword (OR)', 'logic.and': 'all keywords (AND)',
   'questions.title': 'Question bank', 'questions.new': 'New question',
@@ -413,6 +419,8 @@ const de = {
   'login.forgotfail': 'Versand derzeit nicht möglich, erneut versuchen oder Administrator kontaktieren.',
   'login.resettitle': 'Neues Passwort wählen', 'login.pwrepeat': 'Passwort wiederholen', 'login.pwmismatch': 'Die Passwörter stimmen nicht überein', 'login.resetbtn': 'Speichern und anmelden', 'login.resetexpired': 'Ungültiger oder abgelaufener Link — bitte neu anfordern.',
 
+  'demo.title': 'Demo-Video', 'demo.help': 'Ein Rundgang durch DocBingo in unter drei Minuten: Fragenbank, Import und KI, Sitzung anlegen, Live-Spiel mit Smartphones, Präsentationsmodus, Statistiken und Einstellungen. Nur für angemeldete Personen.', 'demo.note': 'Aufgezeichnet auf einer Demo-Datenbank; alle Daten sind fiktiv. Untertitel auf Französisch.', 'demo.chapters': 'Kapitel',
+  'charter.title': 'Nutzungsordnung', 'charter.link': 'Nutzungsordnung lesen', 'charter.reminder': 'Erinnerung: keine identifizierenden Daten (Patient/innen, Angehörige, Kolleg/innen), anonymisiertes und rechtlich freies Bildmaterial, respektvolle und belegte Inhalte. Autor/innen sind für ihren Beitrag allein verantwortlich.', 'charter.ai': 'KI-generierte Fragen müssen gegengelesen und freigegeben werden; übermitteln Sie niemals Patientendaten an die KI.', 'charter.joinnote': 'Nur Pseudonym, kein vollständiger Name. Spielen wir wohlwollend und im Geist des Spiels 🙂', 'charter.aboutdesc': 'Die Nutzungsordnung legt den rechtlichen, ethischen und pädagogischen Rahmen von DocBingo fest: nicht identifizierende Daten, Urheberrechte am Bildmaterial, angemessene Inhalte, KI-Einsatz, Haftung, Wohlwollen und inklusive Sprache. Jedes Konto wird um Annahme gebeten.',
   'about.title': 'Über & Impressum', 'about.coauthors': 'Mitautor/innen',
   'about.ip': 'Geistiges Eigentum', 'about.ipdesc': 'DocBingo wurde von Jean-Baptiste Kern konzipiert und geleitet und mit Unterstützung von Claude (Anthropic) entwickelt. Fragen, Erklärungen und Abbildungen gehören ihren jeweiligen Autor/innen.',
   'about.software': 'Software', 'about.softwaredesc': 'Der Quellcode von DocBingo ist freie Software unter der GNU Affero General Public License v3.0: Sie dürfen ihn nutzen, studieren, ändern und weitergeben, sofern Sie diesen Hinweis behalten und den Quellcode jeder online bereitgestellten geänderten Version unter derselben Lizenz veröffentlichen.',
@@ -514,6 +522,7 @@ const de = {
   'nav.questions': 'Fragen', 'nav.sessions': 'Sitzungen', 'nav.settings': 'Einstellungen',
   'common.save': 'Speichern', 'common.cancel': 'Abbrechen', 'common.delete': 'Löschen',
   'common.edit': 'Bearbeiten', 'common.duplicate': 'Duplizieren', 'common.details': 'Details',
+  'install.title': 'DocBingo zum Startbildschirm hinzufügen', 'install.help': 'Öffnet sich im Vollbild wie eine App — praktisch für Fernbedienung und Abstimmungsgerät.', 'install.ios': 'Auf iPhone/iPad: Teilen antippen, dann «Zum Home-Bildschirm».', 'install.btn': 'Installieren', 'common.close': 'Schliessen',
   'common.loading': 'Laden…', 'common.search': 'Suchen…',
   'logic.or': 'mindestens ein Stichwort (ODER)', 'logic.and': 'alle Stichwörter (UND)',
   'questions.title': 'Fragenbank', 'questions.new': 'Neue Frage',

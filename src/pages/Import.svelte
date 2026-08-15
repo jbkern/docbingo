@@ -76,7 +76,8 @@
 <div class="row" style="margin-bottom:16px">
   <a href="#/questions" class="muted" style="text-decoration:none">← {$t('questions.title')}</a>
 </div>
-<h1 style="margin-bottom:16px">{$t('import.title')}</h1>
+<h1 style="margin-bottom:10px">{$t('import.title')}</h1>
+<div class="alert info" style="margin-bottom:14px; font-size:12.5px; line-height:1.45">📜 {$t('charter.reminder')} {$t('charter.ai')} <a href="#/charter">{$t('charter.link')}</a></div>
 
 <div class="row" style="gap:8px; margin-bottom:14px">
   <button class="btn small" class:secondary={mode !== 'file'} on:click={() => { mode = 'file'; parsed = []; }}>📄 {$t('import.file')}</button>

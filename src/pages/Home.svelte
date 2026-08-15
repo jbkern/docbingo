@@ -95,7 +95,10 @@
         <li>{$t('home.step3')}</li>
         <li>{$t('home.step4')}</li>
       </ol>
-      <a class="btn secondary" style="margin-top:12px" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a>
+      <div class="row" style="margin-top:12px; gap:8px; flex-wrap:wrap">
+        <a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a>
+        <a class="btn secondary" href="#/demo">🎬 {$t('demo.title')}</a>
+      </div>
     </div>
   </div>
 {/if}

@@ -145,6 +145,8 @@ export async function initSchema() {
     created_at TEXT DEFAULT (datetime('now')),
     last_login TEXT
   )`);
+  await addCol('users', 'charter_at', 'TEXT');                     // date d'acceptation de la charte d'utilisation
+  await addCol('users', 'charter_v', 'INTEGER DEFAULT 0');         // version acceptée
   await addCol('questions', 'author_id', 'INTEGER');
   await addCol('questions', 'status', "TEXT DEFAULT 'published'");   // draft | proposed | published
   await addCol('questions', 'review_note', 'TEXT');

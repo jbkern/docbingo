@@ -37,6 +37,13 @@ jobs:
           for id in $(curl -s -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/custom-domains?limit=20" | jq -r '.[].customDomain.id'); do
             curl -s -o /dev/null -X POST -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/custom-domains/$id/verify"
           done
-          BODY=$(printf '**Domaines Render** (`%s`)\n\n```json\n%s\n```\n\nDNS attendus chez Infomaniak :\n- `docbingo.ch` (racine) → enregistrement **A** → `216.24.57.1`\n- `www` → enregistrement **CNAME** → `docbingo.onrender.com.`\n\n_Généré le %s_' "$SID" "$LIST" "$(date -u +%%FT%%TZ)")
+          # état DNS public + test HTTPS
+          DNS=""
+          for d in "${DS[@]}"; do d=$(echo "$d" | xargs)
+            A=$(dig +short A "$d" @1.1.1.1 | tr '\n' ' '); C=$(dig +short CNAME "$d" @1.1.1.1 | tr '\n' ' ')
+            H=$(curl -s -o /dev/null -m 15 -w "%{http_code}" "https://$d/api/ping" || echo "ERR")
+            DNS="$DNS- \`$d\` : A=[${A:-—}] CNAME=[${C:-—}] · https://$d/api/ping → $H\n"
+          done
+          BODY=$(printf '**Domaines Render** (`%s`)\n\n```json\n%s\n```\n\n**DNS observés (1.1.1.1) :**\n%b\nDNS attendus chez Infomaniak :\n- `docbingo.ch` (racine) → enregistrement **A** → `216.24.57.1`\n- `www` → enregistrement **CNAME** → `docbingo.onrender.com.`\n\n_Généré le %s_' "$SID" "$LIST" "$DNS" "$(date -u +%FT%TZ)")
           N=$(gh issue list --state open --search "Domaines in:title" --json number --jq '.[0].number' -R ${{ github.repository }})
           if [ -z "$N" ]; then gh issue create -R ${{ github.repository }} --title "Domaines personnalisés" --body "$BODY"; else gh issue comment -R ${{ github.repository }} "$N" --body "$BODY"; fi

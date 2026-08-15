@@ -86,7 +86,8 @@
 <div class="row" style="margin-bottom:16px">
   <a href="#/questions" class="muted" style="text-decoration:none">← {$t('questions.title')}</a>
 </div>
-<h1 style="margin-bottom:16px">{isNew ? $t('questions.new') : $t('common.edit')}</h1>
+<h1 style="margin-bottom:10px">{isNew ? $t('questions.new') : $t('common.edit')}</h1>
+<div class="alert info" style="margin-bottom:14px; font-size:12.5px; line-height:1.45">📜 {$t('charter.reminder')} <a href="#/charter">{$t('charter.link')}</a></div>
 
 {#if error}<div class="alert error" style="margin-bottom:14px">⚠️ {error}</div>{/if}
 {#if duplicates.length}

@@ -17,6 +17,10 @@
   import Import from './pages/Import.svelte';
   import Settings from './pages/Settings.svelte';
   import About from './pages/About.svelte';
+  import Demo from './pages/Demo.svelte';
+  import InstallHint from './lib/InstallHint.svelte';
+  import Charter from './pages/Charter.svelte';
+  import { charter as charterText } from './lib/charter.js';
 
   let route = { page: 'questions', param: null };
   let settings = { lang: 'fr', theme: 'suisse', sounds: true, animations: true };
@@ -102,6 +106,11 @@
   $: isRemote = route.page === 'remote';
   $: isJoin = route.page === 'join';
   $: isAbout = route.page === 'about';
+  $: isCharter = route.page === 'charter';
+  $: needCharter = !!(user?.id && !user.charterAccepted);
+  let charterOk = false; let charterBusy = false;
+  async function acceptCharter() { charterBusy = true; try { await api.post('/api/me/charter', {}); user = { ...user, charterAccepted: true }; } catch {} charterBusy = false; }
+  $: ct = charterText[$lang] || charterText.fr;
 </script>
 
 {#if resetToken}
@@ -116,6 +125,8 @@
       <a class="muted" href="#/home" on:click={() => (resetToken = null)} style="margin-top:12px; font-size:12px">← {$t('login.enter')}</a>
     </div>
   </div>
+{:else if isCharter}
+  <div class="shell"><main style="padding-top:20px"><Charter /></main></div>
 {:else if isAbout}
   <div class="shell"><main style="padding-top:20px"><About /><p style="margin-top:16px"><a href="#/home">← DocBingo</a></p></main></div>
 {:else if isJoin}
@@ -175,6 +186,21 @@
         {#if user?.id}<button class="userbtn" on:click={logout} title={(user.role === 'admin' ? $t('role.admin') : $t('role.author')) + ' — ' + $t('login.logout')}><span class="uname">{user.name}</span> ⏻</button>{/if}
       </nav>
     </header>
+    {#if needCharter}
+      <div class="modal-bg">
+        <div class="modal">
+          <h2 style="margin:0 0 4px">📜 {ct.title}</h2>
+          <div class="muted" style="font-size:12.5px; margin-bottom:8px">{ct.subtitle}</div>
+          <div class="modal-body"><Charter embedded /></div>
+          <div class="row" style="gap:10px; margin-top:10px; align-items:center; flex-wrap:nowrap"><input id="charter-ok" type="checkbox" bind:checked={charterOk} style="width:18px; height:18px; flex:none" /> <span style="font-weight:600; line-height:1.4"><label for="charter-ok" style="all:unset; cursor:pointer">{ct.accept}</label></span></div>
+          <div class="row" style="gap:8px; margin-top:10px; flex-wrap:wrap">
+            <button class="btn" disabled={!charterOk || charterBusy} on:click={acceptCharter}>{ct.acceptBtn}</button>
+            <button class="btn secondary" on:click={logout}>{$t('login.logout')}</button>
+          </div>
+        </div>
+      </div>
+    {/if}
+    <InstallHint />
     {#if user?.mustChange}
       <div class="alert warn" style="margin-bottom:14px">🔑 {$t('login.mustchange')} <a href="#/settings">{$t('nav.settings')} →</a></div>
     {/if}
@@ -197,9 +223,11 @@
       {:else if route.page === 'review'}<Review on:done={loadMe} />
       {:else if route.page === 'settings'}<Settings {settings} {user} />
       {:else if route.page === 'about'}<About />
+      {:else if route.page === 'demo'}<Demo />
+      {:else if route.page === 'charter'}<Charter />
       {:else}<Home {user} />{/if}
     </main>
-    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="/guide.html" target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
+    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{ct.title}</a> · <a href="/guide.html" target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
   </div>
 {/if}
 
@@ -236,6 +264,9 @@
     .uname { max-width: 90px; }
     .brand b { font-size: 17px; }
   }
+  .modal-bg { position: fixed; inset: 0; background: rgba(10,20,35,.55); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 14px; }
+  .modal { background: var(--bg); border-radius: 14px; max-width: 760px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  .modal-body { overflow: auto; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--panel); }
   .login-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
   .login-box { text-align: center; display: flex; flex-direction: column; align-items: center; padding: 30px; }
   .resume {

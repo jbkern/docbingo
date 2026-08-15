@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { t } from '../lib/i18n.js';
+  import InstallHint from '../lib/InstallHint.svelte';
 
   export let codeParam = null;
   let code = (codeParam || '').toUpperCase();
@@ -117,7 +118,9 @@
       <div style="text-align:center; margin-bottom:14px">
         <div style="font-size:26px; font-weight:800; color:var(--accent)">DocBingo</div>
         <div class="muted">{$t('join.subtitle')}</div>
+        <div class="muted" style="font-size:11.5px; margin-top:6px; line-height:1.4">{$t('charter.joinnote')}</div>
       </div>
+      <InstallHint compact />
       <label>{$t('join.code')}</label>
       <input bind:value={code} on:input={() => (code = code.toUpperCase())} maxlength="6" placeholder="ABC123" style="text-align:center; font-size:26px; letter-spacing:.25em; font-weight:800; text-transform:uppercase" />
       <label style="margin-top:12px">{$t('join.name')}</label>

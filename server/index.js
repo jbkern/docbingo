@@ -43,9 +43,13 @@ async function authEnabled() { return (await get('SELECT COUNT(*) AS c FROM user
 async function userFromReq(req) {
   const t = req.headers['x-docbingo-token']; if (!t) return null;
   const p = verify(t); if (!p?.uid) return null;
-  const u = await get('SELECT id, email, name, role, active, must_change FROM users WHERE id = ?', [p.uid]);
-  return u && u.active ? u : null;
+  const u = await get('SELECT id, email, name, role, active, must_change, charter_at, charter_v FROM users WHERE id = ?', [p.uid]);
+  if (!u || !u.active) return null;
+  u.mustChange = !!u.must_change; u.charterAccepted = (u.charter_v || 0) >= CHARTER_VERSION; delete u.must_change; delete u.charter_v;
+  return u;
 }
+/* Charte d'utilisation : version courante (incrémenter pour redemander l'acceptation) */
+const CHARTER_VERSION = 1;
 app.get('/api/auth/mode', h(async (req, res) => res.json({ accounts: await authEnabled() })));
 app.post('/api/login', h(async (req, res) => {
   if (!(await authEnabled())) return res.json({ ok: true, token: null, user: { name: 'Invité', role: 'admin' } });
@@ -59,7 +63,7 @@ app.post('/api/login', h(async (req, res) => {
   res.json({ ok: true, token: sign({ uid: u.id, r: u.role, t: Date.now() }), user: { id: u.id, email: u.email, name: u.name, role: u.role, mustChange: !!u.must_change } });
 }));
 app.use('/api', async (req, res, next) => {
-  if (req.path === '/login' || req.path === '/ping' || req.path.startsWith('/auth/') || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
+  if (req.path === '/login' || req.path === '/ping' || req.path.startsWith('/auth/') || req.path.startsWith('/demo/') || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
   if (!(await authEnabled())) { req.user = { id: null, name: 'Invité', role: 'admin' }; return next(); }
   const u = await userFromReq(req);
   if (!u) return res.status(401).json({ error: 'auth_required' });
@@ -110,6 +114,40 @@ app.post('/api/auth/reset', h(async (req, res) => {
 }));
 
 app.get('/api/me', (req, res) => res.json(req.user));
+app.post('/api/me/charter', h(async (req, res) => {
+  if (!req.user?.id) return res.json({ ok: true });
+  await run("UPDATE users SET charter_at = datetime('now'), charter_v = ? WHERE id = ?", [CHARTER_VERSION, req.user.id]);
+  res.json({ ok: true, version: CHARTER_VERSION });
+}));
+/* Les routes qui créent du contenu exigent l'acceptation de la charte (comptes individuels uniquement) */
+const charterRequired = (req, res, next) => (!req.user?.id || req.user.charterAccepted ? next() : res.status(403).json({ error: 'charter_required' }));
+
+/* ---------- Vidéo de démonstration (réservée aux utilisateurs connectés) ----------
+   Fichiers : private/demo.mp4, private/demo.vtt, private/demo-chapters.json, private/demo-poster.jpg.
+   La balise <video> ne peut pas envoyer d'en-tête : le jeton passe en paramètre ?t= (vérifié comme un en-tête). */
+const DEMO_DIR = path.join(__dirname, '..', 'private');
+async function demoAuth(req, res, next) {
+  if (!(await authEnabled())) return next();
+  const t = req.query.t || req.headers['x-docbingo-token'];
+  const p = verify(t); const u = p?.uid ? await get('SELECT id FROM users WHERE id = ? AND active = 1', [p.uid]) : null;
+  if (!u) return res.status(401).json({ error: 'auth_required' });
+  next();
+}
+app.get('/api/demo/video', demoAuth, (req, res) => {
+  const file = path.join(DEMO_DIR, 'demo.mp4');
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'no_video' });
+  const size = fs.statSync(file).size; const range = req.headers.range;
+  res.setHeader('Content-Type', 'video/mp4'); res.setHeader('Accept-Ranges', 'bytes'); res.setHeader('Cache-Control', 'private, max-age=86400');
+  if (range) {
+    const [s, e] = range.replace('bytes=', '').split('-'); const start = Number(s); const end = e ? Number(e) : Math.min(start + 2 * 1024 * 1024, size - 1);
+    res.status(206); res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`); res.setHeader('Content-Length', end - start + 1);
+    fs.createReadStream(file, { start, end }).pipe(res);
+  } else { res.setHeader('Content-Length', size); fs.createReadStream(file).pipe(res); }
+});
+app.get('/api/demo/subtitles', demoAuth, (req, res) => { const f = path.join(DEMO_DIR, 'demo.vtt'); if (!fs.existsSync(f)) return res.status(404).end(); res.setHeader('Content-Type', 'text/vtt; charset=utf-8'); fs.createReadStream(f).pipe(res); });
+app.get('/api/demo/chapters', demoAuth, (req, res) => { const f = path.join(DEMO_DIR, 'demo-chapters.json'); res.json(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : []); });
+app.get('/api/demo/poster', (req, res) => { const f = path.join(DEMO_DIR, 'demo-poster.jpg'); if (!fs.existsSync(f)) return res.status(404).end(); res.setHeader('Content-Type', 'image/jpeg'); fs.createReadStream(f).pipe(res); });
+app.get('/api/demo/available', (req, res) => res.json({ available: fs.existsSync(path.join(DEMO_DIR, 'demo.mp4')) }));
 app.post('/api/me/password', h(async (req, res) => {
   const { current, next: np } = req.body || {};
   const u = await get('SELECT * FROM users WHERE id = ?', [req.user.id]);
@@ -241,7 +279,7 @@ function validateQuestion(b) {
   return null;
 }
 
-app.post('/api/questions', h(async (req, res) => {
+app.post('/api/questions', charterRequired, h(async (req, res) => {
   const b = req.body;
   const err = validateQuestion(b);
   if (err) return res.status(400).json({ error: err });
@@ -342,7 +380,7 @@ app.get('/api/cases', h(async (req, res) => {
   const rows = await all('SELECT c.*, (SELECT COUNT(*) FROM questions q WHERE q.case_id = c.id) AS count FROM clinical_cases c ORDER BY c.title');
   res.json(rows);
 }));
-app.post('/api/cases', h(async (req, res) => {
+app.post('/api/cases', charterRequired, h(async (req, res) => {
   const { title, intro } = req.body;
   if (!title?.trim()) return res.status(400).json({ error: 'Titre requis' });
   const info = await run('INSERT INTO clinical_cases (title, intro) VALUES (?, ?)', [title.trim(), intro || null]);
@@ -449,7 +487,7 @@ function parseFreeText(text) {
   return out;
 }
 
-app.post('/api/import/commit', h(async (req, res) => {
+app.post('/api/import/commit', charterRequired, h(async (req, res) => {
   const list = Array.isArray(req.body?.questions) ? req.body.questions : [];
   const existing = new Set((await all('SELECT statement FROM questions')).map(r => r.statement.trim().toLowerCase()));
   let created = 0, skipped = 0;
@@ -474,7 +512,7 @@ app.put('/api/ai/key', adminOnly, h(async (req, res) => {
   await setSetting('ai', key ? { key } : {});
   res.json({ enabled: !!(await aiKey()) });
 }));
-app.post('/api/ai/generate', h(async (req, res) => {
+app.post('/api/ai/generate', charterRequired, h(async (req, res) => {
   const key = await aiKey();
   if (!key) return res.status(400).json({ error: 'Aucune clé API configurée (Réglages).' });
   const { source = '', count = 5, tags = [], difficulty = 2, lang = 'fr', multi = false } = req.body;

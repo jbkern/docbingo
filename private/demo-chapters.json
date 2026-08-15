@@ -1,0 +1,86 @@
+[
+ {
+  "at": 1.9,
+  "text": "DocBingo — le bingo QCM médical. Connectez-vous avec votre email et votre mot de passe."
+ },
+ {
+  "at": 6.3,
+  "text": "L'accueil : session en cours, indicateurs de la banque, dernières sessions et actions rapides."
+ },
+ {
+  "at": 11.8,
+  "text": "La banque de questions : recherche, filtres par mots-clés, niveau de difficulté, statut de validation."
+ },
+ {
+  "at": 15.9,
+  "text": "Un clic sur un mot-clé filtre la banque — par exemple #cardiologie."
+ },
+ {
+  "at": 19.3,
+  "text": "Créer une question : énoncé, propositions A à E, bonne(s) réponse(s), image, explication, difficulté, cas clinique, mots-clés."
+ },
+ {
+  "at": 32.7,
+  "text": "Un administrateur publie directement ; un auteur propose, et la question passe par la file de validation."
+ },
+ {
+  "at": 37.2,
+  "text": "Importez des questions depuis Excel, Word ou un texte collé — ou générez des QCM par IA à partir d'un article, toujours avec relecture avant enregistrement."
+ },
+ {
+  "at": 44.6,
+  "text": "Créer une session : thème ou aléatoire, nombre de questions ou durée, temps par question, participants, papier et/ou smartphone…"
+ },
+ {
+  "at": 47.9,
+  "text": "DocBingo recommande la taille de grille par simulation et alerte si la banque est insuffisante."
+ },
+ {
+  "at": 49.7,
+  "text": "Deux modes de jeu : bonne réponse requise (serious game) ou pur hasard (détente)."
+ },
+ {
+  "at": 53.5,
+  "text": "Le détail de la session : paramètres, grilles uniques à imprimer (2 par A4), ordre des questions modifiable, diapositives libres."
+ },
+ {
+  "at": 59,
+  "text": "L'animation : les participants rejoignent sur smartphone avec le code de session — ou jouent sur papier."
+ },
+ {
+  "at": 70.6,
+  "text": "Le numéro tiré s'affiche en grand, le compte à rebours tourne, la réponse apparaît automatiquement à zéro."
+ },
+ {
+  "at": 77.4,
+  "text": "La bonne réponse s'illumine avec l'explication ; la répartition des réponses de la salle s'affiche."
+ },
+ {
+  "at": 85.9,
+  "text": "Mode présentateur : votre écran devient une console (bonne réponse, question suivante, commandes, participants, télécommande) et l'écran public se projette à part."
+ },
+ {
+  "at": 99.7,
+  "text": "Sur smartphone, les grilles se cochent automatiquement et le bingo est détecté et annoncé par le serveur — sur papier, la vérification par code de grille prend quelques secondes."
+ },
+ {
+  "at": 124.7,
+  "text": "Sur smartphone, les grilles se cochent automatiquement et le bingo est détecté et annoncé par le serveur — sur papier, la vérification par code de grille prend quelques secondes."
+ },
+ {
+  "at": 133,
+  "text": "Fin de session : bingos, podium et fiche de synthèse PDF pour les participants."
+ },
+ {
+  "at": 137.7,
+  "text": "Les statistiques : questions les plus ratées, réussite par mot-clé, palmarès — pour ajuster votre enseignement."
+ },
+ {
+  "at": 142.8,
+  "text": "Réglages : trois thèmes visuels, français / anglais / allemand, ambiances sonores, comptes, collections partageables, sauvegardes."
+ },
+ {
+  "at": 153.2,
+  "text": "DocBingo — apprendre en jouant. Bonne session !"
+ }
+]
