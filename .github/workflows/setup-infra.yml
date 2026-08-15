@@ -137,11 +137,6 @@ jobs:
         run: |
           set -e
           TOKEN=$(curl -sf -X POST -H "Content-Type: application/json" -d "{\"password\":\"$PW\"}" "$URL/api/login" | jq -r '.token')
-          COUNT=$(curl -sf -H "X-DocBingo-Token: $TOKEN" "$URL/api/questions" | jq 'length')
-          if [ "$COUNT" = "0" ]; then
-            sed "s#http://localhost:3001/api#$URL/api#" scripts/seed.js > /tmp/seed.js
-            sed -i "s#headers: { 'Content-Type': 'application/json' }#headers: { 'Content-Type': 'application/json', 'X-DocBingo-Token': '$TOKEN' }#" /tmp/seed.js
-            node /tmp/seed.js
-          else
-            echo "Base déjà peuplée ($COUNT questions) — seed ignoré."
-          fi
+          sed "s#http://localhost:3001/api#$URL/api#" scripts/seed.js > /tmp/seed.js
+          sed -i "s#const HEADERS = { 'Content-Type': 'application/json' };#const HEADERS = { 'Content-Type': 'application/json', 'X-DocBingo-Token': '$TOKEN' };#" /tmp/seed.js
+          node /tmp/seed.js

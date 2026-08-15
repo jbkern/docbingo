@@ -28,10 +28,12 @@ const questions = [
   { statement: "Quelle est la durée d'anticoagulation d'une EP provoquée par un facteur transitoire ?", options: ["6 semaines", "3 mois", "6 mois", "À vie"], correct: [1], explanation: "3 mois pour une EP avec facteur déclenchant réversible.", tags: ["pneumologie", "hematologie"] }
 ];
 
+const HEADERS = { 'Content-Type': 'application/json' };
+const existing = new Set((await fetch(API + '/questions', { headers: HEADERS }).then(r => r.json())).map(q => q.statement));
+let n = 0;
 for (const q of questions) {
-  const res = await fetch(API + '/questions', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q)
-  });
-  if (!res.ok) console.error('FAIL', q.statement.slice(0, 40), await res.text());
+  if (existing.has(q.statement)) continue;
+  const res = await fetch(API + '/questions', { method: 'POST', headers: HEADERS, body: JSON.stringify(q) });
+  if (!res.ok) console.error('FAIL', q.statement.slice(0, 40), await res.text()); else n++;
 }
-console.log('Seeded', questions.length, 'questions');
+console.log('Seeded', n, 'new questions (', existing.size, 'already present )');
