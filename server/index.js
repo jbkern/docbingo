@@ -59,13 +59,55 @@ app.post('/api/login', h(async (req, res) => {
   res.json({ ok: true, token: sign({ uid: u.id, r: u.role, t: Date.now() }), user: { id: u.id, email: u.email, name: u.name, role: u.role, mustChange: !!u.must_change } });
 }));
 app.use('/api', async (req, res, next) => {
-  if (req.path === '/login' || req.path === '/ping' || req.path === '/auth/mode' || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
+  if (req.path === '/login' || req.path === '/ping' || req.path.startsWith('/auth/') || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
   if (!(await authEnabled())) { req.user = { id: null, name: 'Invité', role: 'admin' }; return next(); }
   const u = await userFromReq(req);
   if (!u) return res.status(401).json({ error: 'auth_required' });
   req.user = u; next();
 });
 const adminOnly = (req, res, next) => (req.user?.role === 'admin' ? next() : res.status(403).json({ error: 'admin_only' }));
+
+/* ---------- Mot de passe oublié (email) ----------
+   Envoi via SMTP si configuré (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM, APP_URL) ; sinon la fonction indique de contacter l'administrateur. */
+const mailReady = () => !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+async function sendMail(to, subject, text, html) {
+  const nodemailer = (await import('nodemailer')).default;
+  const port = Number(process.env.SMTP_PORT || 465);
+  const tr = nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+  await tr.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to, subject, text, html });
+}
+app.get('/api/auth/mail-status', (req, res) => res.json({ enabled: mailReady() }));
+app.post('/api/auth/forgot', h(async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  if (!mailReady()) return res.status(503).json({ error: 'mail_not_configured' });
+  const u = await get('SELECT * FROM users WHERE email = ? AND active = 1', [email]);
+  if (u) {
+    // jeton signé, valable 1 h, invalidé automatiquement dès que le mot de passe change (empreinte du hash)
+    const token = sign({ rst: u.id, exp: Date.now() + 3600e3, fp: crypto.createHash('sha256').update(u.pass_hash).digest('hex').slice(0, 16) });
+    const base = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const link = `${base}/#/reset/${token}`;
+    const lang = (await getSetting('app', {})).lang || 'fr';
+    const T = {
+      fr: { s: 'DocBingo — réinitialisation de votre mot de passe', b: `Bonjour ${u.name},\n\nPour choisir un nouveau mot de passe DocBingo, ouvrez ce lien (valable 1 heure) :\n${link}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe reste inchangé.` },
+      en: { s: 'DocBingo — password reset', b: `Hello ${u.name},\n\nTo choose a new DocBingo password, open this link (valid 1 hour):\n${link}\n\nIf you did not request this, ignore this message: your password is unchanged.` },
+      de: { s: 'DocBingo — Passwort zurücksetzen', b: `Hallo ${u.name},\n\nUm ein neues DocBingo-Passwort zu wählen, öffnen Sie diesen Link (1 Stunde gültig):\n${link}\n\nFalls Sie dies nicht angefordert haben, ignorieren Sie diese Nachricht.` }
+    }[lang] || {};
+    try { await sendMail(u.email, T.s, T.b, `<p>${T.b.replace(/\n/g, '<br>').replace(link, `<a href="${link}">${link}</a>`)}</p>`); }
+    catch (e) { console.error('mail error', e.message); return res.status(502).json({ error: 'mail_failed' }); }
+  }
+  // même réponse que l'email existe ou non (pas d'énumération des comptes)
+  res.json({ ok: true });
+}));
+app.post('/api/auth/reset', h(async (req, res) => {
+  const p = verify(req.body?.token);
+  if (!p?.rst || !p.exp || p.exp < Date.now()) return res.status(400).json({ error: 'invalid_or_expired' });
+  const u = await get('SELECT * FROM users WHERE id = ? AND active = 1', [p.rst]);
+  if (!u || crypto.createHash('sha256').update(u.pass_hash).digest('hex').slice(0, 16) !== p.fp) return res.status(400).json({ error: 'invalid_or_expired' });
+  const np = String(req.body?.password || '');
+  if (np.length < 8) return res.status(400).json({ error: 'too_short' });
+  await run('UPDATE users SET pass_hash = ?, must_change = 0 WHERE id = ?', [hashPw(np), u.id]);
+  res.json({ ok: true, token: sign({ uid: u.id, r: u.role, t: Date.now() }), user: { id: u.id, email: u.email, name: u.name, role: u.role, mustChange: false } });
+}));
 
 app.get('/api/me', (req, res) => res.json(req.user));
 app.post('/api/me/password', h(async (req, res) => {

@@ -26,6 +26,7 @@
     const h = (location.hash || '#/home').slice(2);
     const [page, param] = h.split('/');
     route = { page: page || 'home', param: param || null };
+    if (page === 'reset' && param) { resetToken = param; }
   }
 
   async function loadSettings() {
@@ -51,6 +52,22 @@
   let loginError = false;
   let user = null;
   let pending = 0;
+  let forgotMode = false; let forgotMsg = ''; let mailEnabled = false;
+  let resetToken = null; let resetPw = ''; let resetPw2 = ''; let resetMsg = '';
+  async function forgot() {
+    forgotMsg = '';
+    try { await api.post('/api/auth/forgot', { email: email.trim() }); forgotMsg = $t('login.forgotsent'); }
+    catch (e) { forgotMsg = e.message === 'mail_not_configured' ? $t('login.forgotnomail') : $t('login.forgotfail'); }
+  }
+  async function doReset() {
+    resetMsg = '';
+    if (resetPw.length < 8) { resetMsg = $t('acct.tooshort'); return; }
+    if (resetPw !== resetPw2) { resetMsg = $t('login.pwmismatch'); return; }
+    try {
+      const r = await api.post('/api/auth/reset', { token: resetToken, password: resetPw });
+      setToken(r.token); user = r.user; resetToken = null; needLogin = false; location.hash = '#/home'; loadSettings(); checkRunning(); loadMe();
+    } catch (e) { resetMsg = e.message === 'invalid_or_expired' ? $t('login.resetexpired') : e.message; }
+  }
   async function doLogin() {
     loginError = false;
     try {
@@ -68,6 +85,7 @@
 
   onMount(() => {
     parseHash();
+    fetch('/api/auth/mail-status').then(r => r.json()).then(d => (mailEnabled = !!d.enabled)).catch(() => {});
     loadSettings();
     checkRunning();
     loadMe();
@@ -86,7 +104,19 @@
   $: isAbout = route.page === 'about';
 </script>
 
-{#if isAbout}
+{#if resetToken}
+  <div class="login-bg">
+    <div class="login-box">
+      <h1 style="margin:10px 0 6px">DocBingo</h1>
+      <div class="muted" style="margin-bottom:14px">{$t('login.resettitle')}</div>
+      <input type="password" placeholder={$t('acct.new')} bind:value={resetPw} autocomplete="new-password" style="max-width:280px; text-align:center; margin-bottom:8px" />
+      <input type="password" placeholder={$t('login.pwrepeat')} bind:value={resetPw2} autocomplete="new-password" on:keydown={(e) => e.key === 'Enter' && doReset()} style="max-width:280px; text-align:center" />
+      {#if resetMsg}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{resetMsg}</div>{/if}
+      <button class="btn" style="margin-top:14px" on:click={doReset} disabled={!resetPw || !resetPw2}>{$t('login.resetbtn')}</button>
+      <a class="muted" href="#/home" on:click={() => (resetToken = null)} style="margin-top:12px; font-size:12px">← {$t('login.enter')}</a>
+    </div>
+  </div>
+{:else if isAbout}
   <div class="shell"><main style="padding-top:20px"><About /><p style="margin-top:16px"><a href="#/home">← DocBingo</a></p></main></div>
 {:else if isJoin}
   <Join codeParam={route.param} />
@@ -103,10 +133,18 @@
       </svg>
       <h1 style="margin:10px 0 18px">DocBingo</h1>
       <input type="email" placeholder="Email" bind:value={email} autocomplete="username" style="max-width:280px; text-align:center; margin-bottom:8px" />
-      <input type="password" placeholder={$t('login.password')} bind:value={password} autocomplete="current-password"
-        on:keydown={(e) => e.key === 'Enter' && doLogin()} style="max-width:280px; text-align:center" />
-      {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{$t('login.error')}</div>{/if}
-      <button class="btn" style="margin-top:14px" on:click={doLogin}>{$t('login.enter')}</button>
+      {#if !forgotMode}
+        <input type="password" placeholder={$t('login.password')} bind:value={password} autocomplete="current-password"
+          on:keydown={(e) => e.key === 'Enter' && doLogin()} style="max-width:280px; text-align:center" />
+        {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{$t('login.error')}</div>{/if}
+        <button class="btn" style="margin-top:14px" on:click={doLogin}>{$t('login.enter')}</button>
+        <button class="linkbtn" on:click={() => { forgotMode = true; forgotMsg = ''; }}>{$t('login.forgot')}</button>
+      {:else}
+        <div class="muted" style="max-width:300px; line-height:1.5; margin:4px 0 10px">{mailEnabled ? $t('login.forgothelp') : $t('login.forgotnomail')}</div>
+        {#if mailEnabled}<button class="btn" on:click={forgot} disabled={!email.includes('@')}>{$t('login.forgotsend')}</button>{/if}
+        {#if forgotMsg}<div class="alert ok" style="margin-top:10px; max-width:300px">{forgotMsg}</div>{/if}
+        <button class="linkbtn" on:click={() => (forgotMode = false)}>← {$t('login.enter')}</button>
+      {/if}
       <div class="muted" style="margin-top:14px; font-size:12.5px; max-width:300px; line-height:1.5">{$t('login.hint')}</div>
       <a class="muted" href="#/about" style="margin-top:12px; font-size:12px">{$t('about.title')}</a>
     </div>
@@ -166,6 +204,7 @@
 {/if}
 
 <style>
+  .linkbtn { background: none; border: none; color: var(--ink-dim); text-decoration: underline; font-size: 12.5px; margin-top: 12px; cursor: pointer; }
   .foot { border-top: 1px solid var(--border); margin-top: 40px; padding: 14px 0; font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.8; }
   .foot a { color: var(--ink-dim); }
   .shell { max-width: 1080px; margin: 0 auto; padding: 0 18px 60px; }

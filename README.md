@@ -20,7 +20,8 @@ Variables d'environnement :
 |---|---|
 | `TURSO_DATABASE_URL` | URL de la base Turso (`libsql://…`) — à défaut, fichier local |
 | `TURSO_AUTH_TOKEN` | Jeton de la base Turso |
-| `DOCBINGO_PASSWORD` | Mot de passe d'accès à l'application (recommandé en production) |
+| `DOCBINGO_PASSWORD` | Mot de passe du compte administrateur initial (créé au premier démarrage avec `ADMIN_EMAIL` / `ADMIN_NAME`) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `APP_URL` | Optionnel — envoi d'emails (mot de passe oublié). Ex. Infomaniak : `mail.infomaniak.com`, 465, adresse email complète, mot de passe de la boîte |
 
 Le fichier `render.yaml` décrit le service (plan gratuit, build `npm install && npm run build`, démarrage `npm start`, health check `/api/ping`). L'application maintient le serveur éveillé pendant l'utilisation (ping toutes les 4 minutes).
 

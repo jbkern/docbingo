@@ -2,6 +2,12 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'login.forgot': 'Mot de passe oublié ?', 'login.forgothelp': 'Saisissez votre email ci-dessus : nous vous enverrons un lien (valable 1 heure) pour choisir un nouveau mot de passe.',
+  'login.forgotsend': 'Envoyer le lien', 'login.forgotsent': 'Si un compte existe pour cet email, un lien vient d\'être envoyé. Pensez à vérifier les courriers indésirables.',
+  'login.forgotnomail': 'L\'envoi d\'emails n\'est pas configuré sur cette installation : demandez à un administrateur de réinitialiser votre mot de passe (Réglages → Comptes → 🔑).',
+  'login.forgotfail': 'Envoi impossible pour le moment, réessayez ou contactez un administrateur.',
+  'login.resettitle': 'Choisissez un nouveau mot de passe', 'login.pwrepeat': 'Répéter le mot de passe', 'login.pwmismatch': 'Les deux mots de passe diffèrent', 'login.resetbtn': 'Enregistrer et se connecter', 'login.resetexpired': 'Lien invalide ou expiré — refaites une demande.',
+
   'about.title': 'À propos & mentions légales', 'about.coauthors': 'co-auteurs',
   'about.ip': 'Propriété intellectuelle', 'about.ipdesc': 'DocBingo a été conçu et dirigé par Jean-Baptiste Kern et développé avec l\'assistance de Claude (Anthropic). Les questions, explications et illustrations appartiennent à leurs auteurs respectifs.',
   'about.software': 'Logiciel', 'about.softwaredesc': 'Le code source de DocBingo est un logiciel libre distribué sous licence GNU Affero General Public License v3.0 : vous pouvez l\'utiliser, l\'étudier, le modifier et le redistribuer, à condition de conserver cette mention et de publier le code de toute version modifiée mise à disposition en ligne, sous la même licence.',
@@ -202,6 +208,12 @@ const fr = {
 
 const en = {
 
+  'login.forgot': 'Forgot password?', 'login.forgothelp': 'Enter your email above: we will send you a link (valid 1 hour) to choose a new password.',
+  'login.forgotsend': 'Send link', 'login.forgotsent': 'If an account exists for this email, a link has just been sent. Check your spam folder.',
+  'login.forgotnomail': 'Email sending is not configured on this installation: ask an administrator to reset your password (Settings → Accounts → 🔑).',
+  'login.forgotfail': 'Could not send right now, try again or contact an administrator.',
+  'login.resettitle': 'Choose a new password', 'login.pwrepeat': 'Repeat password', 'login.pwmismatch': 'Passwords differ', 'login.resetbtn': 'Save and sign in', 'login.resetexpired': 'Invalid or expired link — request a new one.',
+
   'about.title': 'About & legal notice', 'about.coauthors': 'co-authors',
   'about.ip': 'Intellectual property', 'about.ipdesc': 'DocBingo was designed and led by Jean-Baptiste Kern and developed with the assistance of Claude (Anthropic). Questions, explanations and illustrations belong to their respective authors.',
   'about.software': 'Software', 'about.softwaredesc': 'DocBingo\'s source code is free software under the GNU Affero General Public License v3.0: you may use, study, modify and redistribute it, provided you keep this notice and publish the source of any modified version made available online, under the same licence.',
@@ -394,6 +406,12 @@ const en = {
 };
 
 const de = {
+
+  'login.forgot': 'Passwort vergessen?', 'login.forgothelp': 'Geben Sie oben Ihre E-Mail ein: Wir senden Ihnen einen Link (1 Stunde gültig) für ein neues Passwort.',
+  'login.forgotsend': 'Link senden', 'login.forgotsent': 'Falls ein Konto für diese E-Mail existiert, wurde soeben ein Link gesendet. Prüfen Sie auch den Spam-Ordner.',
+  'login.forgotnomail': 'Der E-Mail-Versand ist auf dieser Installation nicht konfiguriert: Bitten Sie eine/n Administrator/in, Ihr Passwort zurückzusetzen (Einstellungen → Konten → 🔑).',
+  'login.forgotfail': 'Versand derzeit nicht möglich, erneut versuchen oder Administrator kontaktieren.',
+  'login.resettitle': 'Neues Passwort wählen', 'login.pwrepeat': 'Passwort wiederholen', 'login.pwmismatch': 'Die Passwörter stimmen nicht überein', 'login.resetbtn': 'Speichern und anmelden', 'login.resetexpired': 'Ungültiger oder abgelaufener Link — bitte neu anfordern.',
 
   'about.title': 'Über & Impressum', 'about.coauthors': 'Mitautor/innen',
   'about.ip': 'Geistiges Eigentum', 'about.ipdesc': 'DocBingo wurde von Jean-Baptiste Kern konzipiert und geleitet und mit Unterstützung von Claude (Anthropic) entwickelt. Fragen, Erklärungen und Abbildungen gehören ihren jeweiligen Autor/innen.',
