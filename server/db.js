@@ -99,6 +99,40 @@ export async function initSchema() {
     intro TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`);
+  /* Sprint 2 : boîtier de vote, bonus, statistiques */
+  await addCol('sessions', 'join_code', "TEXT");                          // code de session participant (6 car.)
+  await addCol('sessions', 'live_state', "TEXT DEFAULT '{}'");            // état diffusé aux participants {idx, phase, deadline, slide, bonus}
+  await db.execute(`CREATE TABLE IF NOT EXISTS participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    grid_id INTEGER,                    -- grille numérique attribuée (grids.id) ou NULL (papier)
+    grid_code TEXT,
+    marks TEXT DEFAULT '[]',            -- numéros cochés (mode numérique)
+    jokers INTEGER DEFAULT 0,
+    score INTEGER DEFAULT 0,
+    bingo_at INTEGER,                   -- n° de question du bingo validé automatiquement
+    joined_at TEXT DEFAULT (datetime('now')),
+    last_seen TEXT DEFAULT (datetime('now'))
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS answers (
+    session_id INTEGER NOT NULL,
+    participant_id INTEGER NOT NULL,
+    q_index INTEGER NOT NULL,           -- index de la question dans la session (0-based) ; -1 = bonus
+    question_id INTEGER,
+    answer TEXT NOT NULL,               -- lettres, ex. "B" ou "BD"
+    correct INTEGER NOT NULL,           -- 0/1
+    ms INTEGER,                         -- temps de réponse
+    at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (session_id, participant_id, q_index)
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS question_stats (
+    question_id INTEGER PRIMARY KEY,
+    asked INTEGER DEFAULT 0,
+    answered INTEGER DEFAULT 0,
+    correct INTEGER DEFAULT 0
+  )`);
   await db.execute(`CREATE TABLE IF NOT EXISTS remote_codes (
     session_id INTEGER PRIMARY KEY,
     code TEXT NOT NULL,

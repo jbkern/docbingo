@@ -109,3 +109,57 @@ function drawGrid(page, grid, session, yBase, { bold, font, L }) {
   page.drawText(L.footer(session.params.questionCount, k), { x: margin, y: yBase + 18, size: 8, font, color: GREY });
   page.drawText(L.footerRight, { x: W - margin - font.widthOfTextAtSize(L.footerRight, 8), y: yBase + 18, size: 8, font, color: GREY });
 }
+
+/* ---------- Fiche de synthèse de session (questions, réponses, explications, résultats) ---------- */
+const SUMMARY_I18N = {
+  fr: { title: 'Synthèse de session', questions: 'questions', participants: 'participants', winners: 'Bingos', answer: 'Réponse', rate: 'réussite', podium: 'Podium', noData: '—', page: 'page' },
+  en: { title: 'Session summary', questions: 'questions', participants: 'participants', winners: 'Bingos', answer: 'Answer', rate: 'success', podium: 'Podium', noData: '—', page: 'page' },
+  de: { title: 'Sitzungszusammenfassung', questions: 'Fragen', participants: 'Teilnehmende', winners: 'Bingos', answer: 'Antwort', rate: 'richtig', podium: 'Podium', noData: '—', page: 'Seite' }
+};
+export async function generateSummaryPdf(session, stats, leaderboard, lang = 'fr') {
+  const doc = await PDFDocument.create();
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const L = SUMMARY_I18N[lang] || SUMMARY_I18N.fr;
+  const W = A4.w, H = A4.h, M = 40;
+  let page = doc.addPage([W, H]); let y = H - M; let pageNo = 1;
+  const clean = (t) => String(t ?? '').replace(/[—–]/g, '-').replace(/[’‘]/g, "'").replace(/[“”«»]/g, '"').replace(/…/g, '...').replace(/[≤]/g, '<=').replace(/[≥]/g, '>=').replace(/[^\x00-\xFF]/g, '?');
+  const wrap = (text, size, f, maxW) => {
+    const words = clean(text).split(/\s+/); const lines = []; let cur = '';
+    for (const w of words) { const t = cur ? cur + ' ' + w : w; if (f.widthOfTextAtSize(t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur); return lines;
+  };
+  const newPage = () => { page = doc.addPage([W, H]); y = H - M; pageNo++; };
+  const text = (t, size, f = font, color = INK, x = M) => { for (const line of wrap(t, size, f, W - 2 * M - (x - M))) { if (y < M + 20) newPage(); page.drawText(line, { x, y, size, font: f, color }); y -= size * 1.35; } };
+  const gap = (n) => { y -= n; };
+
+  page.drawRectangle({ x: 0, y: H - 78, width: W, height: 78, color: INK });
+  page.drawText('DocBingo', { x: M, y: H - 34, size: 18, font: bold, color: rgb(1, 1, 1) });
+  page.drawText(clean(L.title + ' - ' + session.name), { x: M, y: H - 58, size: 12, font, color: rgb(1, 1, 1) });
+  y = H - 100;
+  const perQ = Object.fromEntries((stats?.perQuestion || []).map(x => [x.q, x]));
+  const dateStr = session.finishedAt ? new Date(session.finishedAt + 'Z').toLocaleDateString(lang === 'en' ? 'en-GB' : lang === 'de' ? 'de-CH' : 'fr-CH') : '';
+  text(`${dateStr}  ·  ${session.questions.length} ${L.questions}  ·  ${stats?.participants || 0} ${L.participants}  ·  ${session.params.gridSize}x${session.params.gridSize}`, 10, font, GREY);
+  gap(4);
+  const winners = session.state?.winners || [];
+  if (winners.length) text(L.winners + ' : ' + winners.map(w => (w.name ? w.name + ' ' : '') + '(' + w.code + ', Q' + w.atQuestion + ')').join(' · '), 10.5, bold, RED);
+  if (leaderboard?.length) { gap(2); text(L.podium + ' : ' + leaderboard.slice(0, 5).map((p, i) => `${i + 1}. ${p.name} ${p.score} pts`).join('  ·  '), 10.5, bold, INK); }
+  gap(10);
+  session.questions.forEach((q, i) => {
+    if (y < M + 90) newPage();
+    const st = perQ[i];
+    page.drawRectangle({ x: M, y: y - 4, width: 22, height: 16, color: INK, borderRadius: 3 });
+    page.drawText(String(i + 1), { x: M + 6, y, size: 9.5, font: bold, color: rgb(1, 1, 1) });
+    const rateTxt = st && st.answered ? `  [${Math.round(100 * st.correct / st.answered)} % ${L.rate}, ${st.answered}]` : '';
+    for (const line of wrap(q.statement + rateTxt, 10.5, bold, W - 2 * M - 30)) { page.drawText(line, { x: M + 28, y, size: 10.5, font: bold, color: INK }); y -= 14; }
+    q.options.forEach((o, k) => {
+      const good = q.correct.includes(k);
+      for (const line of wrap('ABCDE'[k] + ') ' + o, 9.5, good ? bold : font, W - 2 * M - 40)) { if (y < M + 20) newPage(); page.drawText(line, { x: M + 34, y, size: 9.5, font: good ? bold : font, color: good ? rgb(0.16, 0.62, 0.56) : INK }); y -= 12.5; }
+    });
+    if (q.explanation) { for (const line of wrap('> ' + q.explanation, 9, font, W - 2 * M - 40)) { if (y < M + 20) newPage(); page.drawText(line, { x: M + 34, y, size: 9, font, color: GREY }); y -= 12; } }
+    y -= 8;
+  });
+  const pages = doc.getPages();
+  pages.forEach((pg, i) => pg.drawText(`DocBingo - ${clean(session.name)} - ${L.page} ${i + 1}/${pages.length}`, { x: M, y: 22, size: 8, font, color: GREY }));
+  return doc.save();
+}

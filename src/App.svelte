@@ -10,6 +10,8 @@
   import Play from './pages/Play.svelte';
   import Display from './pages/Display.svelte';
   import Remote from './pages/Remote.svelte';
+  import Join from './pages/Join.svelte';
+  import Stats from './pages/Stats.svelte';
   import Import from './pages/Import.svelte';
   import Settings from './pages/Settings.svelte';
 
@@ -70,9 +72,12 @@
   $: isPlay = route.page === 'play';
   $: isDisplay = route.page === 'display';
   $: isRemote = route.page === 'remote';
+  $: isJoin = route.page === 'join';
 </script>
 
-{#if isRemote}
+{#if isJoin}
+  <Join codeParam={route.param} />
+{:else if isRemote}
   <Remote sessionId={route.param} />
 {:else if needLogin}
   <div class="login-bg">
@@ -109,6 +114,7 @@
       <nav>
         <a href="#/questions" class:active={['questions', 'question', 'import'].includes(route.page)}>{$t('nav.questions')}</a>
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
+        <a href="#/stats" class:active={route.page === 'stats'}>{$t('nav.stats')}</a>
         <a href="#/settings" class:active={route.page === 'settings'}>{$t('nav.settings')}</a>
       </nav>
     </header>
@@ -126,6 +132,7 @@
       {:else if route.page === 'sessions'}<Sessions />
       {:else if route.page === 'session-new'}<SessionNew />
       {:else if route.page === 'session'}<SessionDetail id={route.param} />
+      {:else if route.page === 'stats'}<Stats />
       {:else if route.page === 'settings'}<Settings {settings} />
       {:else}<Questions />{/if}
     </main>

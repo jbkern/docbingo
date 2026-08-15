@@ -2,6 +2,25 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'nav.stats': 'Statistiques',
+  'play.joinhint': 'Participez sur votre smartphone :', 'play.connected': 'connecté(s)', 'play.report': 'Résultats',
+  'play.bonus': 'Bonus', 'play.bonushint': 'Question éclair : bonne réponse = un joker (case libre)', 'play.bonusopen': 'réponses ouvertes', 'play.bonusrevealed': 'réponse affichée',
+  'play.bonusrule': 'bonne réponse = 1 joker (case libre au choix)', 'play.bonusclose': 'Fermer le bonus', 'play.bonusopenpublic': 'répondez sur votre smartphone !',
+  'play.report.podium': 'Podium',
+  'pres.participants': 'Participants', 'pres.joinhelp': 'Rejoindre :', 'pres.answered': 'ont répondu', 'pres.correctans': 'juste(s)',
+  'sdetail.results': 'Résultats', 'sdetail.summary': 'Fiche de synthèse (PDF)', 'sdetail.summaryhint': 'Questions, bonnes réponses, explications, taux de réussite et podium — à distribuer aux participants.',
+  'stats.title': 'Statistiques', 'stats.empty': 'Aucune donnée pour l\'instant : les statistiques se construisent avec les réponses données via smartphone (boîtier de vote) pendant les sessions.',
+  'stats.qwithdata': 'questions évaluées', 'stats.answers': 'réponses reçues', 'stats.globalrate': 'taux de réussite global', 'stats.sessionsdone': 'sessions terminées',
+  'stats.hardest': 'Questions les plus ratées', 'stats.hardesthint': 'Taux de bonnes réponses le plus bas (au moins 3 réponses). À revoir en cours… ou à reformuler.',
+  'stats.needmore': 'Pas encore assez de réponses.', 'stats.bytag': 'Réussite par mot-clé', 'stats.palmares': 'Palmarès des bingos', 'stats.nopalmares': 'Aucun bingo numérique enregistré.',
+  'stats.allq': 'Toutes les questions évaluées', 'stats.rate': 'Réussite', 'stats.asked': 'Posée', 'stats.answered': 'Réponses',
+  'join.subtitle': 'Rejoindre une session', 'join.code': 'Code de session', 'join.name': 'Votre prénom', 'join.nameph': 'Ex. Camille', 'join.havepaper': 'J\'ai une grille papier (code G-…)',
+  'join.go': 'Rejoindre', 'join.err.session_not_found': 'Code de session inconnu.', 'join.err.session_done': 'Cette session est terminée.', 'join.err.grid_not_found': 'Grille introuvable.', 'join.err.code_and_name_required': 'Code et prénom requis.',
+  'join.closed': 'Trop tard, les réponses sont closes.', 'join.bonus': 'BONUS', 'join.validate': 'Valider', 'join.correct': 'Bonne réponse !', 'join.wrong': 'Raté…', 'join.jokerwon': 'joker gagné !',
+  'join.bingoauto': 'Votre grille est complète — l\'animateur est prévenu.', 'join.noanswer': 'Pas de réponse à temps.', 'join.waiting': 'En attente de la prochaine question…',
+  'join.mygrid': 'Ma grille', 'join.jokerpick': 'touchez une case pour utiliser le joker', 'join.atq': 'à la question', 'join.points': 'points', 'join.board': 'Classement', 'join.yourbingo': 'Bingo à la question',
+  'join.rulecorrect': 'Une case se coche quand vous répondez juste à sa question.', 'join.ruleluck': 'Une case se coche dès que son numéro est tiré.', 'join.leave': 'Quitter la session',
+
   'nav.import': 'Importer',
   'q.difficulty': 'Niveau de difficulté', 'diff.1': 'Facile', 'diff.2': 'Moyen', 'diff.3': 'Difficile', 'diff.all': 'Tous niveaux',
   'q.case': 'Cas clinique (optionnel)', 'q.nocase': 'aucun', 'q.caseorder': 'ordre', 'q.newcase': 'Nouveau cas', 'q.newcaseph': 'Titre du cas (ex. M. Dupont, 68 ans, douleur thoracique)',
@@ -138,6 +157,25 @@ const fr = {
 
 const en = {
 
+  'nav.stats': 'Statistics',
+  'play.joinhint': 'Join on your phone:', 'play.connected': 'connected', 'play.report': 'Results',
+  'play.bonus': 'Bonus', 'play.bonushint': 'Flash question: correct answer = a joker (free cell)', 'play.bonusopen': 'answers open', 'play.bonusrevealed': 'answer shown',
+  'play.bonusrule': 'correct answer = 1 joker (free cell of your choice)', 'play.bonusclose': 'Close bonus', 'play.bonusopenpublic': 'answer on your phone!',
+  'play.report.podium': 'Podium',
+  'pres.participants': 'Participants', 'pres.joinhelp': 'Join:', 'pres.answered': 'answered', 'pres.correctans': 'correct',
+  'sdetail.results': 'Results', 'sdetail.summary': 'Summary sheet (PDF)', 'sdetail.summaryhint': 'Questions, correct answers, explanations, success rates and podium — to hand out to participants.',
+  'stats.title': 'Statistics', 'stats.empty': 'No data yet: statistics build up from answers given on phones (voting mode) during sessions.',
+  'stats.qwithdata': 'questions assessed', 'stats.answers': 'answers received', 'stats.globalrate': 'overall success rate', 'stats.sessionsdone': 'sessions finished',
+  'stats.hardest': 'Most missed questions', 'stats.hardesthint': 'Lowest correct-answer rate (at least 3 answers). Worth revisiting… or rewording.',
+  'stats.needmore': 'Not enough answers yet.', 'stats.bytag': 'Success by keyword', 'stats.palmares': 'Bingo hall of fame', 'stats.nopalmares': 'No digital bingo recorded.',
+  'stats.allq': 'All assessed questions', 'stats.rate': 'Success', 'stats.asked': 'Asked', 'stats.answered': 'Answers',
+  'join.subtitle': 'Join a session', 'join.code': 'Session code', 'join.name': 'Your first name', 'join.nameph': 'E.g. Sam', 'join.havepaper': 'I have a paper card (code G-…)',
+  'join.go': 'Join', 'join.err.session_not_found': 'Unknown session code.', 'join.err.session_done': 'This session is over.', 'join.err.grid_not_found': 'Card not found.', 'join.err.code_and_name_required': 'Code and name required.',
+  'join.closed': 'Too late, answers are closed.', 'join.bonus': 'BONUS', 'join.validate': 'Submit', 'join.correct': 'Correct!', 'join.wrong': 'Missed…', 'join.jokerwon': 'joker won!',
+  'join.bingoauto': 'Your card is complete — the presenter has been notified.', 'join.noanswer': 'No answer in time.', 'join.waiting': 'Waiting for the next question…',
+  'join.mygrid': 'My card', 'join.jokerpick': 'tap a cell to use the joker', 'join.atq': 'at question', 'join.points': 'points', 'join.board': 'Leaderboard', 'join.yourbingo': 'Bingo at question',
+  'join.rulecorrect': 'A cell is ticked when you answer its question correctly.', 'join.ruleluck': 'A cell is ticked as soon as its number is drawn.', 'join.leave': 'Leave the session',
+
   'nav.import': 'Import',
   'q.difficulty': 'Difficulty level', 'diff.1': 'Easy', 'diff.2': 'Medium', 'diff.3': 'Hard', 'diff.all': 'All levels',
   'q.case': 'Clinical case (optional)', 'q.nocase': 'none', 'q.caseorder': 'order', 'q.newcase': 'New case', 'q.newcaseph': 'Case title (e.g. Mr Smith, 68, chest pain)',
@@ -266,6 +304,25 @@ const en = {
 };
 
 const de = {
+
+  'nav.stats': 'Statistiken',
+  'play.joinhint': 'Mit dem Smartphone teilnehmen:', 'play.connected': 'verbunden', 'play.report': 'Ergebnisse',
+  'play.bonus': 'Bonus', 'play.bonushint': 'Blitzfrage: richtige Antwort = ein Joker (freies Feld)', 'play.bonusopen': 'Antworten offen', 'play.bonusrevealed': 'Antwort angezeigt',
+  'play.bonusrule': 'richtige Antwort = 1 Joker (freies Feld nach Wahl)', 'play.bonusclose': 'Bonus schließen', 'play.bonusopenpublic': 'antworten Sie auf dem Smartphone!',
+  'play.report.podium': 'Podium',
+  'pres.participants': 'Teilnehmende', 'pres.joinhelp': 'Beitreten:', 'pres.answered': 'haben geantwortet', 'pres.correctans': 'richtig',
+  'sdetail.results': 'Ergebnisse', 'sdetail.summary': 'Zusammenfassung (PDF)', 'sdetail.summaryhint': 'Fragen, richtige Antworten, Erklärungen, Erfolgsquoten und Podium — zum Verteilen.',
+  'stats.title': 'Statistiken', 'stats.empty': 'Noch keine Daten: Statistiken entstehen aus den per Smartphone gegebenen Antworten während der Sitzungen.',
+  'stats.qwithdata': 'ausgewertete Fragen', 'stats.answers': 'erhaltene Antworten', 'stats.globalrate': 'Gesamterfolgsquote', 'stats.sessionsdone': 'beendete Sitzungen',
+  'stats.hardest': 'Am häufigsten verfehlte Fragen', 'stats.hardesthint': 'Niedrigste Erfolgsquote (mind. 3 Antworten). Wiederholen… oder umformulieren.',
+  'stats.needmore': 'Noch nicht genügend Antworten.', 'stats.bytag': 'Erfolg nach Stichwort', 'stats.palmares': 'Bingo-Bestenliste', 'stats.nopalmares': 'Kein digitales Bingo erfasst.',
+  'stats.allq': 'Alle ausgewerteten Fragen', 'stats.rate': 'Erfolg', 'stats.asked': 'Gestellt', 'stats.answered': 'Antworten',
+  'join.subtitle': 'Sitzung beitreten', 'join.code': 'Sitzungscode', 'join.name': 'Ihr Vorname', 'join.nameph': 'z. B. Lea', 'join.havepaper': 'Ich habe eine Papierkarte (Code G-…)',
+  'join.go': 'Beitreten', 'join.err.session_not_found': 'Unbekannter Sitzungscode.', 'join.err.session_done': 'Diese Sitzung ist beendet.', 'join.err.grid_not_found': 'Karte nicht gefunden.', 'join.err.code_and_name_required': 'Code und Vorname erforderlich.',
+  'join.closed': 'Zu spät, die Antworten sind geschlossen.', 'join.bonus': 'BONUS', 'join.validate': 'Bestätigen', 'join.correct': 'Richtig!', 'join.wrong': 'Daneben…', 'join.jokerwon': 'Joker gewonnen!',
+  'join.bingoauto': 'Ihre Karte ist voll — die Moderation ist informiert.', 'join.noanswer': 'Keine Antwort rechtzeitig.', 'join.waiting': 'Warten auf die nächste Frage…',
+  'join.mygrid': 'Meine Karte', 'join.jokerpick': 'Feld antippen, um den Joker einzusetzen', 'join.atq': 'bei Frage', 'join.points': 'Punkte', 'join.board': 'Rangliste', 'join.yourbingo': 'Bingo bei Frage',
+  'join.rulecorrect': 'Ein Feld wird markiert, wenn Sie die Frage richtig beantworten.', 'join.ruleluck': 'Ein Feld wird markiert, sobald seine Nummer gezogen wird.', 'join.leave': 'Sitzung verlassen',
 
   'nav.import': 'Importieren',
   'q.difficulty': 'Schwierigkeitsgrad', 'diff.1': 'Leicht', 'diff.2': 'Mittel', 'diff.3': 'Schwer', 'diff.all': 'Alle Stufen',

@@ -6,6 +6,10 @@
   export let secondsLeft = 0;
   export let paused = false;
   export let effectsOn = true;
+  export let dist = null;        // répartition des réponses (boîtier)
+  export let participants = 0;
+  export let joinCode = null;
+  export let bonus = null;
 
   $: q = s?.questions?.[idx];
   $: N = s?.questions?.length || 0;
@@ -16,9 +20,14 @@
 {#if s && q}
   <div class="proj">
     <div class="p-head">
-      <span class="dim">🩺 <b style="color:var(--proj-ink)">{s.name}</b></span>
+      <span class="dim">🩺 <b style="color:var(--proj-ink)">{s.name}</b>{#if joinCode} · 📱 <b style="color:var(--proj-accent); letter-spacing:.12em">{joinCode}</b>{#if participants} · {participants} 👥{/if}{/if}</span>
       <span class="dim">{$t('play.question')} <b style="color:var(--proj-ink); font-size:19px">{idx + 1}</b> / {N}</span>
     </div>
+
+    {#if bonus}
+      <div class="bonus-banner">⚡ {$t('play.bonus')} — {bonus.open ? $t('play.bonusopenpublic') : $t('play.answer') + ' : ' + bonus.q.correct.map(i => 'ABCDE'[i]).join(' + ')}<div class="bq">{bonus.q.statement}</div>
+        <div class="bopts">{#each bonus.q.options as o, i}<span class:bgood={!bonus.open && bonus.q.correct.includes(i)}><b>{'ABCDE'[i]}</b> {o}</span>{/each}</div></div>
+    {/if}
 
     <div class="p-main">
       <div class="ball-col">
@@ -34,7 +43,10 @@
         <div class="props" class:many={q.options.length > 4}>
           {#each q.options as opt, i}
             <div class="prop" class:good={phase === 'revealed' && q.correct.includes(i)} class:bad={phase === 'revealed' && !q.correct.includes(i)}>
-              <span class="letter">{'ABCDE'[i]}</span><span>{opt}</span>
+              <span class="letter">{'ABCDE'[i]}</span><span style="flex:1">{opt}</span>
+              {#if phase === 'revealed' && dist && dist.total}
+                <span class="dpct"><span class="dbarp" style="width:{Math.round(100 * (dist.counts['ABCDE'[i]] || 0) / dist.total)}%"></span><span>{Math.round(100 * (dist.counts['ABCDE'[i]] || 0) / dist.total)} %</span></span>
+              {/if}
             </div>
           {/each}
         </div>
@@ -107,6 +119,13 @@
   .prop.good { border-color: #2a9d8f; background: color-mix(in srgb, #2a9d8f 14%, var(--proj-panel)); box-shadow: 0 0 22px rgba(42,157,143,.3); }
   .prop.good .letter { background: #2a9d8f; color: #fff; }
   .prop.bad { opacity: .35; }
+  .dpct { position: relative; width: 84px; height: 22px; border-radius: 6px; background: var(--proj-chip); overflow: hidden; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; flex-shrink: 0; }
+  .dbarp { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--proj-accent) 55%, transparent); transition: width .5s; }
+  .dpct span:last-child { position: relative; }
+  .bonus-banner { margin: 6px 34px 0; padding: 12px 18px; border-radius: 12px; background: color-mix(in srgb, #e9b949 18%, var(--proj-panel)); border: 2px solid #e9b949; font-weight: 800; font-size: 16px; }
+  .bq { font-size: 20px; margin-top: 6px; }
+  .bopts { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-weight: 500; font-size: 15px; }
+  .bopts .bgood { color: #2a9d8f; font-weight: 800; }
   .explain {
     margin-top: 16px; padding: 13px 17px; border-radius: 12px; font-size: 16px; line-height: 1.5;
     background: color-mix(in srgb, var(--proj-accent) 9%, var(--proj-panel)); border-left: 4px solid var(--proj-accent);

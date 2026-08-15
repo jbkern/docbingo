@@ -64,11 +64,18 @@
       {#if st.winners?.length}
         <div style="margin-top:18px; font-size:21px">
           {#each st.winners as w}
-            <div style="margin:5px 0">🏆 {$t('play.gridword')} <b style="color:var(--proj-accent)">{w.code}</b> — {$t('play.bingoat')} {w.atQuestion}</div>
+            <div style="margin:5px 0">🏆 {#if w.name}<b>{w.name}</b> · {/if}{$t('play.gridword')} <b style="color:var(--proj-accent)">{w.code}</b> — {$t('play.bingoat')} {w.atQuestion}</div>
           {/each}
         </div>
       {:else}
         <div style="color:var(--proj-dim); margin-top:16px; font-size:16px">{$t('play.nowinner')}</div>
+      {/if}
+      {#if st.leaderboard?.length}
+        <div class="podium">
+          {#each st.leaderboard.slice(0, 3) as p, i}
+            <div class="step s{i}"><div style="font-size:34px">{['🥇', '🥈', '🥉'][i]}</div><div style="font-weight:800; font-size:22px">{p.name}</div><div style="color:var(--proj-dim)">{p.score} pts</div></div>
+          {/each}
+        </div>
       {/if}
     </div>
   </div>
@@ -76,14 +83,14 @@
   <Slide slide={st.slide} sessionName={s.name} />
 {:else}
   <div class="dispwrap">
-    <Projection {s} idx={st.idx} phase={st.phase} secondsLeft={st.secondsLeft} paused={st.paused} {effectsOn} />
+    <Projection {s} idx={st.idx} phase={st.phase} secondsLeft={st.secondsLeft} paused={st.paused} {effectsOn} dist={st.dist} participants={st.participants} joinCode={st.joinCode} bonus={st.bonus} />
   </div>
 {/if}
 
 {#if st?.announceCode}
   <div class="announce" class:animate={effectsOn}>
     <div>🎉 BINGO ! 🎉</div>
-    <div class="a-code">{$t('play.gridword')} {st.announceCode}</div>
+    <div class="a-code">{#if st.announceName}{st.announceName} · {/if}{$t('play.gridword')} {st.announceCode}</div>
   </div>
 {/if}
 
@@ -96,6 +103,9 @@
 {/if}
 
 <style>
+  .podium { display: flex; justify-content: center; align-items: flex-end; gap: 16px; margin-top: 26px; }
+  .step { background: color-mix(in srgb, var(--proj-panel) 80%, var(--proj-bg)); border-radius: 12px 12px 4px 4px; padding: 16px 22px 12px; min-width: 170px; }
+  .step.s0 { order: 2; padding-top: 30px; border-top: 4px solid #e9b949; } .step.s1 { order: 1; border-top: 4px solid #b8c0cc; } .step.s2 { order: 3; border-top: 4px solid #c9803a; }
   .waitbg { min-height: 100vh; background: var(--proj-bg); color: var(--proj-ink); display: flex; align-items: center; justify-content: center; }
   .dispwrap { min-height: 100vh; display: flex; flex-direction: column; background: var(--proj-bg); }
   .announce {

@@ -3,16 +3,31 @@
   import { t, lang } from '../lib/i18n.js';
   import { get } from 'svelte/store';
   import { api } from '../lib/api.js';
-  import { generateGridsPdf } from '../lib/pdf.js';
+  import { generateGridsPdf, generateSummaryPdf } from '../lib/pdf.js';
 
   export let id;
   let s = null;
   let pdfBusy = false;
   let editing = false;
+  let stats = null;
+  let board = [];
+  let sumBusy = false;
+  async function loadResults() {
+    try { [stats, board] = await Promise.all([api.get(`/api/sessions/${id}/stats`), api.get(`/api/sessions/${id}/leaderboard`)]); } catch {}
+  }
+  async function downloadSummary() {
+    sumBusy = true;
+    try {
+      const bytes = await generateSummaryPdf(s, stats, board, get(lang));
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      a.download = `docbingo-synthese-${s.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`; a.click();
+    } finally { sumBusy = false; }
+  }
+  $: perQ = stats ? Object.fromEntries(stats.perQuestion.map(x => [x.q, x])) : {};
   let slideDraft = null;   // {afterIndex, type, title, text}
   let err = '';
 
-  onMount(async () => { s = await api.get('/api/sessions/' + id); });
+  onMount(async () => { s = await api.get('/api/sessions/' + id); loadResults(); });
 
   $: canEdit = s && s.status === 'ready';
 
@@ -89,6 +104,20 @@
         <div class="kv"><span>{$t('sdetail.winners')}</span><b>🏆 {s.state.winners.map(w => w.code).join(', ')}</b></div>
       {/if}
     </div>
+    {#if s.status !== 'ready'}
+      <div class="card">
+        <h2 style="margin-bottom:10px">📊 {$t('sdetail.results')}</h2>
+        {#if stats}
+          <div class="kv"><span>{$t('pres.participants')}</span><b>{stats.participants}</b></div>
+          <div class="kv"><span>{$t('sdetail.winners')}</span><b>{s.state?.winners?.length ? s.state.winners.map(w => (w.name ? w.name + ' · ' : '') + w.code).join(', ') : '—'}</b></div>
+          {#if board.length}
+            <div class="kv"><span>{$t('play.report.podium')}</span><b>{board.slice(0, 3).map((p, i) => ['🥇', '🥈', '🥉'][i] + ' ' + p.name + ' (' + p.score + ')').join('  ')}</b></div>
+          {/if}
+          <button class="btn" style="margin-top:12px" on:click={downloadSummary} disabled={sumBusy}>{sumBusy ? $t('sdetail.generating') : '⬇ ' + $t('sdetail.summary')}</button>
+          <div class="muted" style="margin-top:6px">{$t('sdetail.summaryhint')}</div>
+        {:else}<div class="muted">{$t('common.loading')}</div>{/if}
+      </div>
+    {/if}
     <div class="card">
       <h2 style="margin-bottom:10px">{$t('sdetail.gridstitle')} ({s.grids.length})</h2>
       <p class="muted" style="margin-bottom:12px; line-height:1.5">
@@ -122,6 +151,7 @@
           <span class="grow" style="line-height:1.35">{q.statement}
             {#if q.caseId}<span class="tag" style="font-size:11px">🩺</span>{/if}
             <span class="muted" style="font-size:11px">{'●'.repeat(q.difficulty || 2)}</span></span>
+          {#if perQ[i]?.answered}<span class="muted" style="font-size:12px; flex-shrink:0" title={$t('stats.rate')}><b style="color:{perQ[i].correct / perQ[i].answered < .5 ? 'var(--danger)' : 'var(--ok)'}">{Math.round(100 * perQ[i].correct / perQ[i].answered)} %</b> ({perQ[i].answered})</span>{/if}
           <span class="tag" style="flex-shrink:0">✓ {q.correct.map(x => 'ABCDE'[x]).join('')}</span>
           {#if editing}
             <span class="row" style="gap:3px; flex-shrink:0">

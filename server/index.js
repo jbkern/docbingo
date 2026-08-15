@@ -29,7 +29,7 @@ app.post('/api/login', (req, res) => {
   res.status(401).json({ ok: false });
 });
 app.use('/api', (req, res, next) => {
-  if (!PASSWORD || req.path === '/login' || req.path === '/ping' || req.path.startsWith('/remote/')) return next();
+  if (!PASSWORD || req.path === '/login' || req.path === '/ping' || req.path.startsWith('/remote/') || req.path.startsWith('/join') || req.path.startsWith('/p/')) return next();
   const token = req.headers['x-docbingo-token'];
   if (token && safeEqual(String(token), SESSION_TOKEN)) return next();
   res.status(401).json({ error: 'auth_required' });
@@ -410,6 +410,272 @@ app.get('/api/remote/:id/:code/info', h(async (req, res) => {
   res.json({ name: s?.name, currentIndex: s?.current_index, status: s?.status, total: j(s?.question_order, []).length });
 }));
 
+/* ====================================================================
+   BOÎTIER DE VOTE (participants sur smartphone)
+   ==================================================================== */
+const liveStreams = new Map();  // sessionId -> Set(res)  (participants)
+const consoleStreams = new Map(); // sessionId -> Set(res) (console : événements participants)
+function sse(res) {
+  res.setHeader('Content-Type', 'text/event-stream'); res.setHeader('Cache-Control', 'no-cache'); res.setHeader('Connection', 'keep-alive'); res.flushHeaders();
+  const ka = setInterval(() => res.write(': ping\n\n'), 25000);
+  return () => clearInterval(ka);
+}
+function pushTo(map, id, event, data) {
+  for (const r of map.get(String(id)) || []) r.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+const JOIN_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function joinCode() { let c = ''; for (let i = 0; i < 6; i++) c += JOIN_ALPHABET[Math.floor(Math.random() * JOIN_ALPHABET.length)]; return c; }
+
+/* Activer/consulter le code de session (console) */
+app.post('/api/sessions/:id/join-code', h(async (req, res) => {
+  const row = await get('SELECT join_code FROM sessions WHERE id = ?', [req.params.id]);
+  if (!row) return res.status(404).json({ error: 'not_found' });
+  let code = row.join_code;
+  if (!code || req.body?.renew) {
+    do { code = joinCode(); } while (await get('SELECT id FROM sessions WHERE join_code = ?', [code]));
+    await run('UPDATE sessions SET join_code = ? WHERE id = ?', [code, req.params.id]);
+  }
+  res.json({ code });
+}));
+
+/* Participants (console) */
+async function participantsOf(sid) {
+  const rows = await all('SELECT id, name, grid_code, marks, jokers, score, bingo_at, last_seen FROM participants WHERE session_id = ? ORDER BY score DESC, name', [sid]);
+  return rows.map(r => ({ id: r.id, name: r.name, gridCode: r.grid_code, marks: j(r.marks, []), jokers: r.jokers, score: r.score, bingoAt: r.bingo_at, lastSeen: r.last_seen }));
+}
+app.get('/api/sessions/:id/participants', h(async (req, res) => res.json(await participantsOf(req.params.id))));
+app.delete('/api/sessions/:id/participants/:pid', h(async (req, res) => {
+  await run('DELETE FROM participants WHERE id = ? AND session_id = ?', [req.params.pid, req.params.id]);
+  await run('DELETE FROM answers WHERE participant_id = ? AND session_id = ?', [req.params.pid, req.params.id]);
+  res.json({ ok: true });
+}));
+
+/* Répartition des réponses d'une question (console + public) */
+async function distribution(sid, qIndex) {
+  const rows = await all('SELECT answer, correct FROM answers WHERE session_id = ? AND q_index = ?', [sid, qIndex]);
+  const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 }; let correct = 0;
+  for (const r of rows) { for (const l of r.answer) if (counts[l] !== undefined) counts[l]++; if (r.correct) correct++; }
+  return { total: rows.length, correct, counts };
+}
+app.get('/api/sessions/:id/distribution/:q', h(async (req, res) => res.json(await distribution(req.params.id, Number(req.params.q)))));
+
+/* Console : diffuse l'état courant aux participants (appelé par Play à chaque changement) */
+app.post('/api/sessions/:id/live', h(async (req, res) => {
+  const st = req.body || {};
+  await run('UPDATE sessions SET live_state = ? WHERE id = ?', [JSON.stringify(st), req.params.id]);
+  // à l'affichage d'une question : compter "asked" pour les stats
+  if (st.phase === 'question' && st.event === 'newq' && st.questionId) {
+    await run('INSERT INTO question_stats (question_id, asked) VALUES (?, 1) ON CONFLICT(question_id) DO UPDATE SET asked = asked + 1', [st.questionId]);
+  }
+  const row = await get('SELECT questions_snapshot FROM sessions WHERE id = ?', [req.params.id]);
+  const qs = j(row?.questions_snapshot, []);
+  const enriched = { ...st, question: st.idx >= 0 && qs[st.idx] ? publicQuestion(qs[st.idx], st.phase === 'revealed') : null };
+  if (enriched.bonus?.q) enriched.bonus = { ...enriched.bonus, q: publicQuestion(enriched.bonus.q, !!enriched.bonus.revealed) };
+  pushTo(liveStreams, req.params.id, 'state', enriched);
+  if (st.phase === 'revealed' && st.idx >= 0) pushTo(liveStreams, req.params.id, 'dist', await distribution(req.params.id, st.idx));
+  res.json({ ok: true, listeners: (liveStreams.get(String(req.params.id)) || new Set()).size });
+}));
+/* Console : flux des événements participants (arrivées, réponses, bingos) */
+app.get('/api/sessions/:id/console-events', (req, res) => {
+  const stop = sse(res); const id = String(req.params.id);
+  if (!consoleStreams.has(id)) consoleStreams.set(id, new Set());
+  consoleStreams.get(id).add(res);
+  res.write('event: hello\ndata: {}\n\n');
+  req.on('close', () => { stop(); consoleStreams.get(id)?.delete(res); });
+});
+
+/* ---- Participant : rejoindre ---- */
+app.post('/api/join', h(async (req, res) => {
+  const code = String(req.body?.code || '').toUpperCase().trim();
+  const name = String(req.body?.name || '').trim().slice(0, 40);
+  const paper = String(req.body?.paper || '').toUpperCase().trim(); // code de grille papier (optionnel)
+  if (!code || !name) return res.status(400).json({ error: 'code_and_name_required' });
+  const row = await get('SELECT * FROM sessions WHERE join_code = ?', [code]);
+  if (!row) return res.status(404).json({ error: 'session_not_found' });
+  if (row.status === 'done') return res.status(400).json({ error: 'session_done' });
+  const sid = row.id;
+  // grille : papier déclarée, sinon attribuer une grille numérique libre (grille non attribuée à un autre participant)
+  let gridId = null, gridCode = null;
+  if (paper) {
+    const g = await get('SELECT id, code FROM grids WHERE session_id = ? AND code = ?', [sid, paper.startsWith('G') ? paper : 'G-' + paper.padStart(3, '0')]);
+    if (!g) return res.status(404).json({ error: 'grid_not_found' });
+    gridId = g.id; gridCode = g.code;
+  } else {
+    const g = await get('SELECT id, code FROM grids WHERE session_id = ? AND id NOT IN (SELECT grid_id FROM participants WHERE session_id = ? AND grid_id IS NOT NULL) ORDER BY id LIMIT 1', [sid, sid]);
+    if (!g) {
+      // plus de grille libre : en générer une nouvelle
+      const params = j(row.params, {}); const N = j(row.question_order, []).length; const k = params.gridSize;
+      const nums = shuffle([...Array(N).keys()].map(i => i + 1)).slice(0, k * k);
+      const cells = []; for (let r = 0; r < k; r++) cells.push(nums.slice(r * k, (r + 1) * k));
+      const cnt = (await get('SELECT COUNT(*) AS c FROM grids WHERE session_id = ?', [sid])).c;
+      const codeG = 'G-' + String(cnt + 1).padStart(3, '0');
+      const info = await run('INSERT INTO grids (session_id, code, cells) VALUES (?, ?, ?)', [sid, codeG, JSON.stringify(cells)]);
+      gridId = info.lastInsertRowid; gridCode = codeG;
+    } else { gridId = g.id; gridCode = g.code; }
+  }
+  const token = crypto.randomBytes(16).toString('hex');
+  const info = await run('INSERT INTO participants (session_id, token, name, grid_id, grid_code) VALUES (?, ?, ?, ?, ?)', [sid, token, name, gridId, gridCode]);
+  pushTo(consoleStreams, sid, 'joined', { id: info.lastInsertRowid, name, gridCode });
+  res.json({ token, sessionId: sid, sessionName: row.name, gridCode });
+}));
+
+async function participantByToken(token) { return get('SELECT * FROM participants WHERE token = ?', [token]); }
+async function sessionForParticipant(p) { return get('SELECT * FROM sessions WHERE id = ?', [p.session_id]); }
+function questionsOf(row) { return j(row.questions_snapshot, []); }
+
+/* ---- Participant : état + grille (au chargement / reconnexion) ---- */
+app.get('/api/p/:token/state', h(async (req, res) => {
+  const p = await participantByToken(req.params.token);
+  if (!p) return res.status(404).json({ error: 'unknown' });
+  const row = await sessionForParticipant(p);
+  const grid = await get('SELECT code, cells FROM grids WHERE id = ?', [p.grid_id]);
+  const qs = questionsOf(row);
+  const live = j(row.live_state, {});
+  const params = j(row.params, {});
+  const myAnswers = (await all('SELECT q_index, answer, correct FROM answers WHERE participant_id = ?', [p.id])).map(a => ({ q: a.q_index, answer: a.answer, correct: !!a.correct }));
+  await run("UPDATE participants SET last_seen = datetime('now') WHERE id = ?", [p.id]);
+  // question courante (sans la bonne réponse tant que non révélée)
+  const cur = live.idx >= 0 && qs[live.idx] ? publicQuestion(qs[live.idx], live.phase === 'revealed') : null;
+  if (live.bonus?.q) live.bonus = { ...live.bonus, q: publicQuestion(live.bonus.q, !!live.bonus.revealed) };
+  res.json({
+    name: p.name, sessionName: row.name, status: row.status, marking: params.marking, gridSize: params.gridSize, total: qs.length,
+    grid: grid ? { code: grid.code, cells: j(grid.cells, []) } : null,
+    marks: j(p.marks, []), jokers: p.jokers, score: p.score, bingoAt: p.bingo_at,
+    live: { ...live, question: cur }, myAnswers
+  });
+}));
+function publicQuestion(q, revealed) {
+  return { id: q.id, statement: q.statement, options: q.options, image: q.image, multi: q.correct.length > 1,
+    ...(revealed ? { correct: q.correct, explanation: q.explanation } : {}) };
+}
+/* ---- Participant : flux temps réel ---- */
+app.get('/api/p/:token/events', h(async (req, res) => {
+  const p = await participantByToken(req.params.token);
+  if (!p) return res.status(404).end();
+  const row = await sessionForParticipant(p);
+  const stop = sse(res); const id = String(p.session_id);
+  if (!liveStreams.has(id)) liveStreams.set(id, new Set());
+  liveStreams.get(id).add(res);
+  const live = j(row.live_state, {}); const qs = questionsOf(row);
+  res.write(`event: state\ndata: ${JSON.stringify({ ...live, question: live.idx >= 0 && qs[live.idx] ? publicQuestion(qs[live.idx], live.phase === 'revealed') : null })}\n\n`);
+  req.on('close', () => { stop(); liveStreams.get(id)?.delete(res); });
+}));
+
+/* ---- Participant : répondre ---- */
+app.post('/api/p/:token/answer', h(async (req, res) => {
+  const p = await participantByToken(req.params.token);
+  if (!p) return res.status(404).json({ error: 'unknown' });
+  const row = await sessionForParticipant(p);
+  const live = j(row.live_state, {}); const qs = questionsOf(row); const params = j(row.params, {});
+  const qIndex = Number(req.body?.qIndex);
+  const isBonus = qIndex === -1;
+  if (!isBonus && (qIndex !== live.idx || live.phase !== 'question')) return res.status(400).json({ error: 'closed' });
+  if (isBonus && !(live.bonus && live.bonus.open)) return res.status(400).json({ error: 'closed' });
+  const q = isBonus ? live.bonus.q : qs[qIndex];
+  if (!q) return res.status(400).json({ error: 'no_question' });
+  const answer = [...new Set(String(req.body?.answer || '').toUpperCase().replace(/[^A-E]/g, '').split(''))].sort().join('');
+  if (!answer) return res.status(400).json({ error: 'empty' });
+  const good = q.correct.map(i => 'ABCDE'[i]).sort().join('');
+  const correct = answer === good ? 1 : 0;
+  const ms = live.startedAt ? Math.max(0, Date.now() - live.startedAt) : null;
+  const dup = await get('SELECT 1 FROM answers WHERE session_id = ? AND participant_id = ? AND q_index = ?', [row.id, p.id, qIndex]);
+  if (dup) return res.status(400).json({ error: 'already' });
+  await run('INSERT INTO answers (session_id, participant_id, q_index, question_id, answer, correct, ms) VALUES (?, ?, ?, ?, ?, ?, ?)', [row.id, p.id, qIndex, q.id || null, answer, correct, ms]);
+  if (!isBonus && q.id) await run('INSERT INTO question_stats (question_id, answered, correct) VALUES (?, 1, ?) ON CONFLICT(question_id) DO UPDATE SET answered = answered + 1, correct = correct + excluded.correct', [q.id, correct]);
+  // score : 100 pts par bonne réponse + bonus rapidité (jusqu'à 50) ; joker si bonus réussi
+  let addScore = 0;
+  if (correct) addScore = 100 + (ms != null && params.secondsPerQuestion ? Math.round(50 * Math.max(0, 1 - ms / (params.secondsPerQuestion * 1000))) : 0);
+  let jokers = p.jokers;
+  if (isBonus && correct) jokers++;
+  // marquage automatique (mode numérique) : la case du numéro courant
+  let marks = j(p.marks, []); let bingoAt = p.bingo_at;
+  if (!isBonus) {
+    const num = qIndex + 1;
+    const grid = await get('SELECT cells FROM grids WHERE id = ?', [p.grid_id]);
+    const cells = j(grid?.cells, []);
+    const has = cells.some(r => r.includes(num));
+    if (has && (params.marking === 'luck' || correct)) marks = [...new Set([...marks, num])];
+    if (!bingoAt && hasBingo(cells, marks)) { bingoAt = num; pushTo(consoleStreams, row.id, 'bingo', { id: p.id, name: p.name, gridCode: p.grid_code, atQuestion: num }); }
+  }
+  await run('UPDATE participants SET score = score + ?, jokers = ?, marks = ?, bingo_at = ? WHERE id = ?', [addScore, jokers, JSON.stringify(marks), bingoAt, p.id]);
+  pushTo(consoleStreams, row.id, 'answer', { id: p.id, qIndex, correct: !!correct });
+  res.json({ ok: true, correct: !!correct, addScore, marks, jokers, bingoAt, joker: isBonus && correct });
+}));
+function hasBingo(cells, marks) {
+  const k = cells.length; if (!k) return false;
+  const m = cells.map(r => r.map(n => marks.includes(n)));
+  for (let r = 0; r < k; r++) if (m[r].every(Boolean)) return true;
+  for (let c = 0; c < k; c++) if (m.every(rw => rw[c])) return true;
+  if ([...Array(k).keys()].every(i => m[i][i])) return true;
+  if ([...Array(k).keys()].every(i => m[i][k - 1 - i])) return true;
+  return false;
+}
+/* ---- Participant : utiliser un joker (case libre) ---- */
+app.post('/api/p/:token/joker', h(async (req, res) => {
+  const p = await participantByToken(req.params.token);
+  if (!p) return res.status(404).json({ error: 'unknown' });
+  if (p.jokers < 1) return res.status(400).json({ error: 'no_joker' });
+  const num = Number(req.body?.num);
+  const grid = await get('SELECT cells FROM grids WHERE id = ?', [p.grid_id]);
+  const cells = j(grid?.cells, []);
+  if (!cells.some(r => r.includes(num))) return res.status(400).json({ error: 'not_on_grid' });
+  const marks = [...new Set([...j(p.marks, []), num])];
+  let bingoAt = p.bingo_at;
+  const row = await sessionForParticipant(p); const live = j(row.live_state, {});
+  if (!bingoAt && hasBingo(cells, marks)) { bingoAt = Math.max(1, (live.idx ?? 0) + 1); pushTo(consoleStreams, row.id, 'bingo', { id: p.id, name: p.name, gridCode: p.grid_code, atQuestion: bingoAt, joker: true }); }
+  await run('UPDATE participants SET jokers = jokers - 1, marks = ?, bingo_at = ? WHERE id = ?', [JSON.stringify(marks), bingoAt, p.id]);
+  res.json({ ok: true, marks, jokers: p.jokers - 1, bingoAt });
+}));
+/* ---- Classement (console + participants) ---- */
+app.get('/api/sessions/:id/leaderboard', h(async (req, res) => {
+  const ps = await participantsOf(req.params.id);
+  const answered = await all('SELECT participant_id, COUNT(*) AS n, SUM(correct) AS c FROM answers WHERE session_id = ? AND q_index >= 0 GROUP BY participant_id', [req.params.id]);
+  const map = Object.fromEntries(answered.map(a => [a.participant_id, a]));
+  res.json(ps.map(p => ({ ...p, answered: map[p.id]?.n || 0, correct: map[p.id]?.c || 0 })).sort((a, b) => b.score - a.score || b.correct - a.correct));
+}));
+app.get('/api/p/:token/leaderboard', h(async (req, res) => {
+  const p = await participantByToken(req.params.token);
+  if (!p) return res.status(404).json({ error: 'unknown' });
+  const ps = await participantsOf(p.session_id);
+  res.json(ps.slice(0, 10).map(x => ({ name: x.name, score: x.score, me: x.id === p.id })));
+}));
+
+/* ---- Statistiques ---- */
+app.get('/api/stats/questions', h(async (req, res) => {
+  const rows = await all('SELECT q.id, q.statement, q.difficulty, s.asked, s.answered, s.correct FROM questions q JOIN question_stats s ON s.question_id = q.id WHERE s.answered > 0 ORDER BY (CAST(s.correct AS REAL) / s.answered) ASC');
+  const out = [];
+  for (const r of rows) {
+    const tags = (await all('SELECT t.name FROM tags t JOIN question_tags qt ON qt.tag_id = t.id WHERE qt.question_id = ?', [r.id])).map(x => x.name);
+    out.push({ id: r.id, statement: r.statement, difficulty: r.difficulty, asked: r.asked, answered: r.answered, correct: r.correct, rate: r.answered ? r.correct / r.answered : null, tags });
+  }
+  // par mot-clé
+  const byTag = {};
+  for (const q of out) for (const t of q.tags) { byTag[t] = byTag[t] || { answered: 0, correct: 0 }; byTag[t].answered += q.answered; byTag[t].correct += q.correct; }
+  res.json({ questions: out, byTag: Object.entries(byTag).map(([tag, v]) => ({ tag, ...v, rate: v.answered ? v.correct / v.answered : null })).sort((a, b) => a.rate - b.rate) });
+}));
+app.get('/api/sessions/:id/stats', h(async (req, res) => {
+  const row = await get('SELECT * FROM sessions WHERE id = ?', [req.params.id]);
+  if (!row) return res.status(404).json({ error: 'not_found' });
+  const s = await rowToSession(row, true);
+  const askedCount = s.currentIndex + 1;
+  let bingoNow = 0, oneAway = 0;
+  for (const grid of s.grids) {
+    const k = grid.cells.length;
+    const marked = grid.cells.map(rw => rw.map(n => n <= askedCount));
+    const lines = [];
+    for (let r = 0; r < k; r++) lines.push([...Array(k).keys()].map(c => marked[r][c]));
+    for (let c = 0; c < k; c++) lines.push([...Array(k).keys()].map(r => marked[r][c]));
+    lines.push([...Array(k).keys()].map(i => marked[i][i]));
+    lines.push([...Array(k).keys()].map(i => marked[i][k - 1 - i]));
+    const best = Math.max(...lines.map(l => l.filter(Boolean).length));
+    if (best === k) bingoNow++; else if (best === k - 1) oneAway++;
+  }
+  // stats par question de cette session (réponses numériques)
+  const perQ = await all('SELECT q_index, COUNT(*) AS n, SUM(correct) AS c FROM answers WHERE session_id = ? AND q_index >= 0 GROUP BY q_index', [req.params.id]);
+  const nP = (await get('SELECT COUNT(*) AS c FROM participants WHERE session_id = ?', [req.params.id])).c;
+  res.json({ total: s.grids.length, bingoNow, oneAway, askedCount, participants: nP, perQuestion: perQ.map(x => ({ q: x.q_index, answered: x.n, correct: x.c })) });
+}));
+
 /* ---------- Export ---------- */
 app.get('/api/export', h(async (req, res) => {
   const questions = await allQuestions();
@@ -539,6 +805,7 @@ async function rowToSession(row, withDetails = false) {
     questionOrder: j(row.question_order, []), currentIndex: row.current_index,
     state: j(row.state, {}), createdAt: row.created_at, startedAt: row.started_at, finishedAt: row.finished_at,
     slides: j(row.slides, []),
+    joinCode: row.join_code || null,
     gridCount: (await get('SELECT COUNT(*) AS c FROM grids WHERE session_id = ?', [row.id])).c
   };
   if (withDetails) {
@@ -658,28 +925,6 @@ app.post('/api/sessions/:id/state', h(async (req, res) => {
   vals.push(req.params.id);
   await run(`UPDATE sessions SET ${sets.join(', ')} WHERE id = ?`, vals);
   res.json({ ok: true });
-}));
-
-/* Race stats */
-app.get('/api/sessions/:id/stats', h(async (req, res) => {
-  const row = await get('SELECT * FROM sessions WHERE id = ?', [req.params.id]);
-  if (!row) return res.status(404).json({ error: 'not_found' });
-  const s = await rowToSession(row, true);
-  const askedCount = s.currentIndex + 1;
-  let bingoNow = 0, oneAway = 0;
-  for (const grid of s.grids) {
-    const k = grid.cells.length;
-    const marked = grid.cells.map(rw => rw.map(n => n <= askedCount));
-    const lines = [];
-    for (let r = 0; r < k; r++) lines.push([...Array(k).keys()].map(c => marked[r][c]));
-    for (let c = 0; c < k; c++) lines.push([...Array(k).keys()].map(r => marked[r][c]));
-    lines.push([...Array(k).keys()].map(i => marked[i][i]));
-    lines.push([...Array(k).keys()].map(i => marked[i][k - 1 - i]));
-    const best = Math.max(...lines.map(l => l.filter(Boolean).length));
-    if (best === k) bingoNow++;
-    else if (best === k - 1) oneAway++;
-  }
-  res.json({ total: s.grids.length, bingoNow, oneAway, askedCount });
 }));
 
 /* Duplicate session */

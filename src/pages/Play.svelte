@@ -32,6 +32,16 @@
   let remoteCode = null;
   let remoteSrc = null;
   let remoteOnline = false;
+  let joinCode = null;
+  let participants = [];
+  let answersThisQ = { total: 0, correct: 0 };
+  let dist = null;
+  let autoBingos = [];       // bingos numériques annoncés
+  let bonus = null;          // {q, open, revealed}
+  let leaderboard = [];
+  let questionStartedAt = null;
+  let consoleAbort = null;
+  $: hasParticipants = participants.length > 0;
   $: ambiance = s?.params?.ambiance || settings.ambiance || 'classic';
   $: pendingSlides = s ? (s.slides || []) : [];
 
@@ -65,10 +75,83 @@
       remoteCode = rc.code || (await api.post(`/api/sessions/${sessionId}/remote-code`)).code;
       listenRemote();
     } catch {}
-    // Diapositive « avant la première question »
-    if (phase === 'intro') { /* affichée au start() */ }
+    try {
+      joinCode = (await api.post(`/api/sessions/${sessionId}/join-code`, {})).code;
+      participants = await api.get(`/api/sessions/${sessionId}/participants`);
+      autoBingos = participants.filter(p => p.bingoAt).map(p => ({ id: p.id, name: p.name, gridCode: p.gridCode, atQuestion: p.bingoAt }));
+      listenConsole();
+    } catch {}
+    pushLive();
   });
-  onDestroy(() => { clearInterval(timerId); window.removeEventListener('keydown', onKey); channel?.close(); remoteSrc?.close(); });
+  onDestroy(() => { clearInterval(timerId); window.removeEventListener('keydown', onKey); channel?.close(); remoteSrc?.close(); consoleAbort?.abort(); });
+
+  /* ---------- Boîtier de vote : diffusion + événements ---------- */
+  let liveTimer = null;
+  function pushLive(event) {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(async () => {
+      try {
+        await api.post(`/api/sessions/${sessionId}/live`, {
+          idx, phase: phase === 'done' ? 'done' : phase, event: event || null, questionId: q?.id || null,
+          deadline: phase === 'question' && !paused ? Date.now() + secondsLeft * 1000 : null,
+          startedAt: questionStartedAt, slide, bonus: bonus ? { q: bonus.q, open: bonus.open, revealed: bonus.revealed } : null
+        });
+      } catch {}
+    }, 80);
+  }
+  function listenConsole() {
+    consoleAbort = new AbortController(); const tk = localStorage.getItem('docbingo_token');
+    (async () => {
+      while (!consoleAbort.signal.aborted) {
+        try {
+          const res = await fetch(`/api/sessions/${sessionId}/console-events`, { headers: tk ? { 'X-DocBingo-Token': tk } : {}, signal: consoleAbort.signal });
+          const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+          while (true) {
+            const { value, done } = await reader.read(); if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let i;
+            while ((i = buf.indexOf('\n\n')) >= 0) {
+              const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+              const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = /data: (.*)/.exec(chunk)?.[1];
+              if (!data) continue;
+              const d = JSON.parse(data);
+              if (ev === 'joined') participants = [...participants, { id: d.id, name: d.name, gridCode: d.gridCode, score: 0, marks: [], jokers: 0 }];
+              if (ev === 'answer' && d.qIndex === idx) answersThisQ = { total: answersThisQ.total + 1, correct: answersThisQ.correct + (d.correct ? 1 : 0) };
+              if (ev === 'bingo') onAutoBingo(d);
+            }
+          }
+        } catch {}
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    })();
+  }
+  function onAutoBingo(d) {
+    if (autoBingos.some(b => b.id === d.id)) return;
+    autoBingos = [...autoBingos, d];
+    winners = [...winners, { code: d.gridCode, atQuestion: d.atQuestion, name: d.name }];
+    announce = { code: d.gridCode, name: d.name };
+    if (effectsOn) blastConfetti();
+    broadcast('bingo'); sfx('bingo'); save();
+    setTimeout(() => { announce = null; broadcast(); }, 6000);
+  }
+  async function refreshDist() { try { dist = await api.get(`/api/sessions/${sessionId}/distribution/${idx}`); } catch {} }
+  async function refreshBoard() { try { leaderboard = await api.get(`/api/sessions/${sessionId}/leaderboard`); participants = leaderboard; } catch {} }
+  /* ---------- Question bonus (joker) ---------- */
+  async function launchBonus() {
+    // pioche une question hors session, mêmes filtres si possible
+    try {
+      const all = await api.get('/api/questions');
+      const used = new Set(s.questions.map(x => x.id));
+      const pool = all.filter(x => !used.has(x.id));
+      if (!pool.length) return;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      paused = true;
+      bonus = { q: pick, open: true, revealed: false };
+      sfx('draw'); broadcast(); pushLive('bonus');
+    } catch {}
+  }
+  function revealBonus() { if (!bonus) return; bonus = { ...bonus, open: false, revealed: true }; sfx('reveal'); broadcast(); pushLive(); }
+  function closeBonus() { bonus = null; paused = false; broadcast(); pushLive(); }
 
   function listenRemote() {
     const tk = localStorage.getItem('docbingo_token');
@@ -116,7 +199,7 @@
   function broadcast(eventName) {
     channel?.send({
       type: 'state',
-      st: { idx, phase, secondsLeft, paused, winners, announceCode: announce?.code || null, slide },
+      st: { idx, phase, secondsLeft, paused, winners, announceCode: announce?.code || null, announceName: announce?.name || null, slide, dist: phase === 'revealed' ? dist : null, bonus, participants: participants.length, joinCode, leaderboard: phase === 'done' ? leaderboard.slice(0, 5) : null },
       event: eventName || null
     });
   }
@@ -125,13 +208,17 @@
     window.open(location.origin + location.pathname + '#/display/' + sessionId, 'docbingo-display-' + sessionId,
       'width=1280,height=800');
   }
-  $: (idx, phase, secondsLeft, paused, winners, announce, slide, channel && broadcast());
+  $: (idx, phase, secondsLeft, paused, winners, announce, slide, dist, bonus, participants, leaderboard, channel && broadcast());
+  let _lastPaused = null;
+  $: if (s && paused !== _lastPaused) { _lastPaused = paused; pushLive(); }
 
   /* ---------- Timer ---------- */
   function startTimer(seconds) {
     clearInterval(timerId);
     secondsLeft = seconds;
     paused = false;
+    questionStartedAt = Date.now();
+    answersThisQ = { total: 0, correct: 0 }; dist = null;
     timerId = setInterval(() => {
       if (paused) return;
       secondsLeft--;
@@ -146,16 +233,16 @@
   let slideQueue = [];
   function showSlides(list, then) {
     if (!list.length) return then();
-    slideQueue = [...list]; slideNext = then; slide = slideQueue.shift(); paused = true; broadcast();
+    slideQueue = [...list]; slideNext = then; slide = slideQueue.shift(); paused = true; broadcast(); pushLive();
   }
   let slideNext = null;
   function closeSlide() {
-    if (slideQueue.length) { slide = slideQueue.shift(); broadcast(); return; }
-    slide = null; paused = false; const f = slideNext; slideNext = null; broadcast(); f && f();
+    if (slideQueue.length) { slide = slideQueue.shift(); broadcast(); pushLive(); return; }
+    slide = null; paused = false; const f = slideNext; slideNext = null; broadcast(); pushLive(); f && f();
   }
   function start() {
     showSlides(slidesAfter(-1), () => {
-      idx = 0; phase = 'question'; startTimer(s.params.secondsPerQuestion); save('running'); sfx('draw'); refreshRace();
+      idx = 0; phase = 'question'; startTimer(s.params.secondsPerQuestion); save('running'); sfx('draw'); refreshRace(); pushLive('newq');
     });
   }
   function reveal() {
@@ -166,6 +253,8 @@
     broadcast('reveal');
     save();
     refreshRace();
+    pushLive('reveal');
+    if (hasParticipants) setTimeout(refreshDist, 400);
   }
   function advance() {
     if (slide) return closeSlide();
@@ -174,7 +263,7 @@
     if (phase === 'revealed') {
       const goNext = () => {
         if (idx + 1 >= N) return finish();
-        idx++; phase = 'question'; startTimer(s.params.secondsPerQuestion); save(); sfx('draw');
+        idx++; phase = 'question'; startTimer(s.params.secondsPerQuestion); save(); sfx('draw'); pushLive('newq');
       };
       showSlides(slidesAfter(idx), goNext);
     }
@@ -190,6 +279,7 @@
     clearInterval(timerId);
     phase = 'done';
     save('done');
+    pushLive('done'); refreshBoard();
     if (effectsOn) blastConfetti();
     broadcast('finish');
     sfx('end');
@@ -258,6 +348,14 @@
         {s.params.marking === 'correct' ? $t('mark.correct') : $t('mark.luck')} ·
         {s.params.secondsPerQuestion} s / {$t('play.question').toLowerCase()}
       </div>
+      {#if joinCode}
+        <div class="joinbox">
+          <div class="dim" style="font-size:14px">📱 {$t('play.joinhint')}</div>
+          <div class="joinurl">{location.origin}{location.pathname}#/join</div>
+          <div class="joincode">{joinCode}</div>
+          <div class="dim" style="font-size:14px">{participants.length} {$t('play.connected')}</div>
+        </div>
+      {/if}
       <div class="row" style="justify-content:center; gap:12px">
         <button class="bigbtn" on:click={start}>▶ {$t('play.start')}</button>
         <button class="bigbtn ghost" on:click={openDisplay}>🖥️ {$t('play.opendisplay')}</button>
@@ -275,21 +373,34 @@
       {#if winners.length}
         <div style="margin:20px 0; font-size:22px">
           {#each winners as w}
-            <div style="margin:6px 0">🏆 {$t('play.gridword')} <b style="color:var(--proj-accent)">{w.code}</b> — {$t('play.bingoat')} {w.atQuestion}</div>
+            <div style="margin:6px 0">🏆 {#if w.name}<b>{w.name}</b> · {/if}{$t('play.gridword')} <b style="color:var(--proj-accent)">{w.code}</b> — {$t('play.bingoat')} {w.atQuestion}</div>
           {/each}
         </div>
       {:else}
         <div class="dim" style="margin:20px 0; font-size:17px; line-height:1.6">{$t('play.nowinner')}</div>
       {/if}
-      <div class="dim">{N} {$t('play.questionsasked')}</div>
-      <a class="bigbtn" style="margin-top:26px; display:inline-block; text-decoration:none" href="#/sessions">{$t('play.backsessions')}</a>
+      {#if leaderboard.length}
+        <div class="podium">
+          {#each leaderboard.slice(0, 3) as p, i}
+            <div class="step s{i}"><div class="medal">{['🥇', '🥈', '🥉'][i]}</div><div class="pname">{p.name}</div><div class="pscore">{p.score} pts · {p.correct}/{p.answered}</div></div>
+          {/each}
+        </div>
+        {#if leaderboard.length > 3}
+          <div class="dim" style="font-size:14px; margin-top:8px">{leaderboard.slice(3, 10).map((p, i) => (i + 4) + '. ' + p.name + ' (' + p.score + ')').join(' · ')}</div>
+        {/if}
+      {/if}
+      <div class="dim" style="margin-top:12px">{N} {$t('play.questionsasked')}</div>
+      <div class="row" style="justify-content:center; gap:10px; margin-top:26px">
+        <a class="bigbtn" style="text-decoration:none" href="#/sessions">{$t('play.backsessions')}</a>
+        <a class="bigbtn ghost" style="text-decoration:none" href={'#/session/' + s.id}>📊 {$t('play.report')}</a>
+      </div>
     </div>
   </div>
 
 {:else if !presenterMode}
   <!-- ============ MODE SIMPLE ÉCRAN ============ -->
   <div class="solo">
-    {#if slide}<Slide {slide} sessionName={s.name} />{:else}<Projection {s} {idx} {phase} {secondsLeft} {paused} {effectsOn} />{/if}
+    {#if slide}<Slide {slide} sessionName={s.name} />{:else}<Projection {s} {idx} {phase} {secondsLeft} {paused} {effectsOn} {dist} participants={participants.length} {joinCode} {bonus} />{/if}
     <div class="p-controls">
       <button on:click={() => (paused = !paused)} title="Pause (P)">{paused ? '▶' : '⏸'}</button>
       <button on:click={() => (secondsLeft += 15)} disabled={phase !== 'question'}>＋15 s</button>
@@ -297,6 +408,7 @@
       <button on:click={prev} disabled={idx <= 0}>⏮</button>
       <button class="primary" on:click={advance}>{phase === 'revealed' ? (idx + 1 >= N ? '🏁 ' + $t('play.finish') : '⏭ ' + $t('play.next')) : '⏭'}</button>
       <button on:click={openDisplay}>🖥️ {$t('play.presentermode')}</button>
+      <button on:click={launchBonus} disabled={!!bonus || phase !== 'revealed'} title={$t('play.bonushint')}>⚡ Bonus</button>
       <button class="bingo" on:click={() => { verifyOpen = true; paused = true; }}>🎉 {$t('play.verifybingo')}</button>
       {#if winners.length}<span class="dim" style="font-size:13px">🏆 {winners.map(w => w.code).join(' · ')}</span>{/if}
     </div>
@@ -334,7 +446,32 @@
           {#if q.explanation}
             <div class="c-explain">💡 {q.explanation}</div>
           {/if}
+          {#if hasParticipants}
+            <div class="answers-bar">
+              📱 {answersThisQ.total} / {participants.length} {$t('pres.answered')}
+              {#if phase === 'revealed'} · <b style="color:var(--ok)">{answersThisQ.correct}</b> {$t('pres.correctans')}{/if}
+              {#if dist && dist.total}
+                <div class="dist">
+                  {#each q.options as opt, i}
+                    <div class="dbar"><span class="dl" class:dgood={q.correct.includes(i)}>{'ABCDE'[i]}</span><div class="dtrack"><div class="dfill" class:dgood={q.correct.includes(i)} style="width:{Math.round(100 * (dist.counts['ABCDE'[i]] || 0) / dist.total)}%"></div></div><span class="dn">{dist.counts['ABCDE'[i]] || 0}</span></div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
         </div>
+
+        {#if bonus}
+          <div class="card" style="border:2px solid var(--warn)">
+            <div class="panel-title">⚡ {$t('play.bonus')} — {bonus.open ? $t('play.bonusopen') : $t('play.bonusrevealed')}</div>
+            <div style="font-weight:700; margin-bottom:8px">{bonus.q.statement}</div>
+            <div class="muted" style="font-size:13px">{$t('play.answer')} : {bonus.q.correct.map(i => 'ABCDE'[i]).join(' + ')} — {$t('play.bonusrule')}</div>
+            <div class="row" style="gap:8px; margin-top:10px">
+              {#if bonus.open}<button class="btn small" on:click={revealBonus}>👁 {$t('play.answer')}</button>{/if}
+              <button class="btn small secondary" on:click={closeBonus}>{$t('play.bonusclose')}</button>
+            </div>
+          </div>
+        {/if}
 
         {#if nextQ}
           <div class="card">
@@ -366,6 +503,7 @@
             <button class="ctrl" on:click={prev} disabled={idx <= 0}><span>⏮️</span>{$t('pres.prev')}</button>
             <button class="ctrl primaryc" on:click={advance}><span>⏭️</span>{phase === 'revealed' ? (idx + 1 >= N ? $t('play.finish') : $t('play.next')) : $t('play.answer')}</button>
             <button class="ctrl" on:click={openDisplay}><span>🖥️</span>{$t('pres.reopen')}</button>
+            <button class="ctrl" on:click={launchBonus} disabled={!!bonus || phase !== 'revealed'} title={$t('play.bonushint')}><span>⚡</span>{$t('play.bonus')}</button>
             <button class="ctrl wide dangerc" on:click={() => { verifyOpen = true; paused = true; }}><span>🎉</span>{$t('play.verifybingo')} — {$t('pres.entercode')}</button>
           </div>
         </div>
@@ -377,6 +515,21 @@
               <span class="chip" class:asked={i < idx} class:current={i === idx}>{i + 1}</span>
             {/each}
           </div>
+        </div>
+
+        <div class="card">
+          <div class="panel-title">👥 {$t('pres.participants')} <span class="tag" style="margin-left:auto">{participants.length}</span></div>
+          <div class="muted" style="font-size:13px; line-height:1.6">
+            {$t('pres.joinhelp')} <span class="url">{location.origin}{location.pathname}#/join</span> · {$t('pres.remotecode')} : <b style="font-size:20px; letter-spacing:.12em; color:var(--accent)">{joinCode || '…'}</b>
+          </div>
+          {#if participants.length}
+            <div class="plist">
+              {#each [...participants].sort((a, b) => b.score - a.score).slice(0, 12) as p, i}
+                <span class="pchip" class:pbingo={p.bingoAt}>{i < 3 && phase !== 'intro' ? ['🥇', '🥈', '🥉'][i] : ''}{p.name} <b>{p.score}</b>{#if p.bingoAt} 🏆{/if}</span>
+              {/each}
+              {#if participants.length > 12}<span class="muted">+{participants.length - 12}</span>{/if}
+            </div>
+          {/if}
         </div>
 
         <div class="card">
@@ -521,6 +674,23 @@
   .mini-timer.pausedc { opacity: .5; }
   .disp-dot { opacity: .3; }
   .disp-dot.on { opacity: 1; filter: drop-shadow(0 0 4px var(--ok)); }
+  .joinbox { margin: 0 auto 26px; background: color-mix(in srgb, var(--proj-panel) 70%, var(--proj-bg)); border: 1.5px dashed var(--proj-dim); border-radius: 16px; padding: 14px 26px; display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+  .joinurl { font-family: ui-monospace, monospace; font-size: 15px; color: var(--proj-ink); }
+  .joincode { font-size: 46px; font-weight: 800; letter-spacing: .25em; color: var(--proj-accent); }
+  .podium { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 22px 0 6px; }
+  .step { background: color-mix(in srgb, var(--proj-panel) 80%, var(--proj-bg)); border-radius: 12px 12px 4px 4px; padding: 14px 18px 10px; min-width: 150px; }
+  .step.s0 { order: 2; padding-top: 26px; border-top: 4px solid #e9b949; } .step.s1 { order: 1; border-top: 4px solid #b8c0cc; } .step.s2 { order: 3; border-top: 4px solid #c9803a; }
+  .medal { font-size: 30px; } .pname { font-weight: 800; font-size: 19px; } .pscore { color: var(--proj-dim); font-size: 13px; }
+  .answers-bar { margin-top: 12px; padding: 9px 12px; border-radius: 10px; background: var(--soft); font-size: 13.5px; }
+  .dist { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .dbar { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .dl { width: 20px; font-weight: 800; color: var(--ink-dim); } .dl.dgood { color: var(--ok); }
+  .dtrack { flex: 1; height: 10px; background: var(--panel); border-radius: 99px; overflow: hidden; }
+  .dfill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s; } .dfill.dgood { background: var(--ok); }
+  .dn { width: 26px; text-align: right; color: var(--ink-dim); }
+  .plist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .pchip { background: var(--soft); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; }
+  .pchip.pbingo { background: color-mix(in srgb, var(--warn) 30%, var(--panel)); }
   .url { font-family: ui-monospace, monospace; font-size: 12px; background: var(--soft); padding: 2px 6px; border-radius: 5px; word-break: break-all; }
   .c-grid { display: grid; grid-template-columns: 1.25fr .95fr; gap: 14px; align-items: start; }
   .c-left, .c-right { display: flex; flex-direction: column; gap: 14px; }
