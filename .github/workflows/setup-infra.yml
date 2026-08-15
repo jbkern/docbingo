@@ -74,13 +74,21 @@ jobs:
           DB_URL: ${{ steps.db.outputs.url }}
           DB_TOKEN: ${{ steps.db.outputs.token }}
           PW: ${{ secrets.DOCBINGO_PASSWORD }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          APP_URL: https://docbingo.onrender.com
         run: |
           set -e
           OWNER=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/owners?limit=20" | jq -r '.[0].owner.id')
           echo "Owner: $OWNER"
           EXISTING=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?name=docbingo&limit=5" | jq -r '.[0].service.id // empty')
           ENVVARS=$(jq -nc --arg u "$DB_URL" --arg t "$DB_TOKEN" --arg p "$PW" \
-            '[{key:"TURSO_DATABASE_URL",value:$u},{key:"TURSO_AUTH_TOKEN",value:$t},{key:"DOCBINGO_PASSWORD",value:$p},{key:"NODE_VERSION",value:"22"},{key:"ADMIN_EMAIL",value:"jeanbaptiste.kern@hibroye.ch"},{key:"ADMIN_NAME",value:"Jean-Baptiste Kern"}]')
+            --arg sh "$SMTP_HOST" --arg sp "$SMTP_PORT" --arg su "$SMTP_USER" --arg sk "$SMTP_PASS" --arg mf "$MAIL_FROM" --arg au "$APP_URL" \
+            '[{key:"TURSO_DATABASE_URL",value:$u},{key:"TURSO_AUTH_TOKEN",value:$t},{key:"DOCBINGO_PASSWORD",value:$p},{key:"NODE_VERSION",value:"22"},{key:"ADMIN_EMAIL",value:"jeanbaptiste.kern@hibroye.ch"},{key:"ADMIN_NAME",value:"Jean-Baptiste Kern"}]
+             + (if $sh != "" then [{key:"SMTP_HOST",value:$sh},{key:"SMTP_PORT",value:$sp},{key:"SMTP_USER",value:$su},{key:"SMTP_PASS",value:$sk},{key:"MAIL_FROM",value:$mf},{key:"APP_URL",value:$au}] else [] end)')
           if [ -z "$EXISTING" ]; then
             BODY=$(jq -nc --arg o "$OWNER" --argjson env "$ENVVARS" '{
               type:"web_service", name:"docbingo", ownerId:$o,
