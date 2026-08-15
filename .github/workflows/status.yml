@@ -1,0 +1,33 @@
+name: Statut de production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier Render et l'application
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RK: ${{ secrets.RENDER_API_KEY }}
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+        run: |
+          set -e
+          SVC=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?limit=20" | jq -c '[.[] | .service | {id, name, url: .serviceDetails.url, region: .serviceDetails.region, plan: .serviceDetails.plan, autoDeploy, suspended}]')
+          URL=$(echo "$SVC" | jq -r '.[] | select(.name=="docbingo") | .url // empty' | head -1)
+          [ -z "$URL" ] && URL=$(echo "$SVC" | jq -r '.[0].url')
+          SID=$(echo "$SVC" | jq -r '.[] | select(.url=="'"$URL"'") | .id')
+          DEPLOY=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/deploys?limit=1" | jq -c '.[0].deploy | {status, commit: .commit.message, finishedAt}')
+          PING=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/ping")
+          TOKEN=$(curl -sf -X POST -H "Content-Type: application/json" -d "{\"password\":\"$PW\"}" "$URL/api/login" | jq -r '.token')
+          NQ=$(curl -sf -H "X-DocBingo-Token: $TOKEN" "$URL/api/questions" | jq 'length')
+          NS=$(curl -sf -H "X-DocBingo-Token: $TOKEN" "$URL/api/sessions" | jq 'length')
+          HTML=$(curl -s "$URL/" | grep -o "<title>[^<]*" | head -1)
+          BODY=$(printf '**URL : %s**\n\nServices : `%s`\n\nDernier déploiement : `%s`\n\nPing : %s · Titre page : `%s` · Questions : %s · Sessions : %s\n\n_Généré le %s_' "$URL" "$SVC" "$DEPLOY" "$PING" "$HTML" "$NQ" "$NS" "$(date -u +%FT%TZ)")
+          N=$(gh issue list --state open --search "Statut de production in:title" --json number --jq '.[0].number' -R ${{ github.repository }})
+          if [ -z "$N" ]; then gh issue create -R ${{ github.repository }} --title "Statut de production" --body "$BODY"; else gh issue comment -R ${{ github.repository }} "$N" --body "$BODY"; fi
