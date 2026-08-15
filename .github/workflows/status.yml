@@ -17,7 +17,7 @@ jobs:
           RK: ${{ secrets.RENDER_API_KEY }}
           PW: ${{ secrets.DOCBINGO_PASSWORD }}
         run: |
-          set -e
+          set +e
           SVC=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?limit=20" | jq -c '[.[] | .service | {id, name, url: .serviceDetails.url, region: .serviceDetails.region, plan: .serviceDetails.plan, autoDeploy, suspended}]')
           URL=$(echo "$SVC" | jq -r '.[] | select(.name=="docbingo") | .url // empty' | head -1)
           [ -z "$URL" ] && URL=$(echo "$SVC" | jq -r '.[0].url')
@@ -29,7 +29,7 @@ jobs:
           echo "::add-mask::$TOKEN"
           Q=$(curl -s -w " [%{http_code}]" -H "X-DocBingo-Token: $TOKEN" "$URL/api/questions"); NQ=$(echo "$Q" | sed 's/ \[.*//' | jq 'length' 2>/dev/null || echo "$Q" | tail -c 300)
           S=$(curl -s -w " [%{http_code}]" -H "X-DocBingo-Token: $TOKEN" "$URL/api/sessions"); NS=$(echo "$S" | sed 's/ \[.*//' | jq 'length' 2>/dev/null || echo "$S" | tail -c 300)
-          HTML=$(curl -s -w " [%{http_code}]" "$URL/" | grep -o "<title>[^<]*\| \[[0-9]*\]$" | tr '\n' ' ')
+          HTML=$(curl -s -o /tmp/index.html -w "%{http_code}" "$URL/"); HTML="$HTML $(grep -o '<title>[^<]*' /tmp/index.html | head -1)"
           LOGS=$(curl -s -H "Authorization: Bearer $RK" "https://api.render.com/v1/logs?ownerId=$(echo "$SVC" | jq -r '.[0].id' | sed 's/srv-.*//')&resource=$SID&limit=25" | jq -r '.logs[]? | .message' 2>/dev/null | tail -25 | sed "s/$TOKEN/***/g" | head -c 2500)
           BODY=$(printf '**URL : %s**\n\nServices : `%s`\n\nDéploiements : `%s`\n\nPing : %s · Login : `%s` · Page : `%s` · Questions : %s · Sessions : %s\n\nLogs récents :\n```\n%s\n```\n_Généré le %s_' "$URL" "$SVC" "$DEPLOY" "$PING" "$(echo "$LOGIN" | sed 's/"token":"[^"]*"/"token":"***"/')" "$HTML" "$NQ" "$NS" "$LOGS" "$(date -u +%FT%TZ)")
           N=$(gh issue list --state open --search "Statut de production in:title" --json number --jq '.[0].number' -R ${{ github.repository }})
