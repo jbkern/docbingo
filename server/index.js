@@ -97,7 +97,7 @@ app.post('/api/auth/forgot', h(async (req, res) => {
       de: { s: 'DocBingo — Passwort zurücksetzen', b: `Hallo ${u.name},\n\nUm ein neues DocBingo-Passwort zu wählen, öffnen Sie diesen Link (1 Stunde gültig):\n${link}\n\nFalls Sie dies nicht angefordert haben, ignorieren Sie diese Nachricht.` }
     }[lang] || {};
     try { await sendMail(u.email, T.s, T.b, `<p>${T.b.replace(/\n/g, '<br>').replace(link, `<a href="${link}">${link}</a>`)}</p>`); }
-    catch (e) { console.error('mail error', e.message); return res.status(502).json({ error: 'mail_failed' }); }
+    catch (e) { console.error('mail error', e.message); return res.status(502).json({ error: 'mail_failed', detail: String(e.message).slice(0, 200) }); }
   }
   // même réponse que l'email existe ou non (pas d'énumération des comptes)
   res.json({ ok: true });
