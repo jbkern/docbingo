@@ -26,7 +26,7 @@ jobs:
           SID=$(echo "$SVC" | jq -r '.[] | select(.url=="'"$URL"'") | .id')
           DEPLOY=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/deploys?limit=3" | jq -c '[.[] | .deploy | {status, commit: .commit.message[0:40], finishedAt}]')
           PING=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/ping")
-          LOGIN=$(curl -s -w " [%{http_code}]" -X POST -H "Content-Type: application/json" -d "{\"password\":\"$PW\"}" "$URL/api/login")
+          LOGIN=$(curl -s -w " [%{http_code}]" -X POST -H "Content-Type: application/json" -d "{\"email\":\"jeanbaptiste.kern@hibroye.ch\",\"password\":\"$PW\"}" "$URL/api/login")
           TOKEN=$(echo "$LOGIN" | sed 's/ \[.*//' | jq -r '.token // empty')
           echo "::add-mask::$TOKEN"
           Q=$(curl -s -w " [%{http_code}]" -H "X-DocBingo-Token: $TOKEN" "$URL/api/questions"); NQ=$(echo "$Q" | sed 's/ \[.*//' | jq 'length' 2>/dev/null || echo "$Q" | tail -c 300)
