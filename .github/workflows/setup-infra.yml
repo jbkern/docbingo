@@ -8,6 +8,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -65,6 +69,7 @@ jobs:
       - name: Render — service web (plan gratuit, Francfort)
         id: render
         env:
+          GH_TOKEN: ${{ github.token }}
           RK: ${{ secrets.RENDER_API_KEY }}
           DB_URL: ${{ steps.db.outputs.url }}
           DB_TOKEN: ${{ steps.db.outputs.token }}
@@ -84,10 +89,15 @@ jobs:
               serviceDetails:{ runtime:"node", plan:"free", region:"frankfurt",
                 envSpecificDetails:{ buildCommand:"npm install && npm run build", startCommand:"npm start" },
                 healthCheckPath:"/api/ping" } }')
-            RESP=$(curl -s -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d "$BODY" https://api.render.com/v1/services)
-            echo "$RESP" | jq -c 'if .service then {id:.service.id, url:.service.serviceDetails.url} else . end'
-            SID=$(echo "$RESP" | jq -r '.service.id // empty')
-            [ -z "$SID" ] && { echo "Échec de création du service"; exit 1; }
+            RESP=$(curl -s -w "\nHTTP %{http_code}" -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d "$BODY" https://api.render.com/v1/services)
+            echo "$RESP" | head -c 1500 > /tmp/render-resp.txt
+            SID=$(echo "$RESP" | head -1 | jq -r '.service.id // empty' 2>/dev/null || true)
+            if [ -z "$SID" ]; then
+              echo "Échec de création du service :"; cat /tmp/render-resp.txt
+              OWNERS=$(curl -s -H "Authorization: Bearer $RK" "https://api.render.com/v1/owners?limit=20" | jq -c '[.[] | .owner | {id, name, type}]')
+              gh issue create --title "Diagnostic déploiement Render" --body "$(printf 'Réponse Render :\n```\n%s\n```\nOwners : `%s`' "$(cat /tmp/render-resp.txt)" "$OWNERS")" || true
+              exit 1
+            fi
           else
             SID=$EXISTING
             echo "Service existant : $SID — mise à jour des variables"
