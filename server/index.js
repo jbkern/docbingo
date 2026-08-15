@@ -76,9 +76,15 @@ const adminOnly = (req, res, next) => (req.user?.role === 'admin' ? next() : res
 const mailReady = () => !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 async function sendMail(to, subject, text, html) {
   const nodemailer = (await import('nodemailer')).default;
-  const port = Number(process.env.SMTP_PORT || 465);
-  const tr = nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
-  await tr.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to, subject, text, html });
+  // Essaie le port configuré (465 = TLS implicite) puis 587 (STARTTLS) si l'hébergeur bloque le premier ; délais courts.
+  const ports = [...new Set([Number(process.env.SMTP_PORT || 465), 587, 465])];
+  let lastErr;
+  for (const port of ports) {
+    const tr = nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, requireTLS: port !== 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }, connectionTimeout: 12000, greetingTimeout: 12000, socketTimeout: 20000 });
+    try { await tr.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to, subject, text, html }); return; }
+    catch (e) { lastErr = e; console.error(`mail port ${port}:`, e.message); }
+  }
+  throw new Error(ports.map(p => p).join('/') + ' : ' + (lastErr?.message || 'échec'));
 }
 app.get('/api/auth/mail-status', (req, res) => res.json({ enabled: mailReady() }));
 app.post('/api/auth/forgot', h(async (req, res) => {
