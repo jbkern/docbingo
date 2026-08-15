@@ -80,7 +80,7 @@ jobs:
           echo "Owner: $OWNER"
           EXISTING=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?name=docbingo&limit=5" | jq -r '.[0].service.id // empty')
           ENVVARS=$(jq -nc --arg u "$DB_URL" --arg t "$DB_TOKEN" --arg p "$PW" \
-            '[{key:"TURSO_DATABASE_URL",value:$u},{key:"TURSO_AUTH_TOKEN",value:$t},{key:"DOCBINGO_PASSWORD",value:$p},{key:"NODE_VERSION",value:"22"}]')
+            '[{key:"TURSO_DATABASE_URL",value:$u},{key:"TURSO_AUTH_TOKEN",value:$t},{key:"DOCBINGO_PASSWORD",value:$p},{key:"NODE_VERSION",value:"22"},{key:"ADMIN_EMAIL",value:"jeanbaptiste.kern@hibroye.ch"},{key:"ADMIN_NAME",value:"Jean-Baptiste Kern"}]')
           if [ -z "$EXISTING" ]; then
             BODY=$(jq -nc --arg o "$OWNER" --argjson env "$ENVVARS" '{
               type:"web_service", name:"docbingo", ownerId:$o,
