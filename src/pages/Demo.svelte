@@ -1,12 +1,13 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '../lib/i18n.js';
+  import { t, lang } from '../lib/i18n.js';
   let token = localStorage.getItem('docbingo_token') || '';
   let chapters = [];
   let video;
-  onMount(async () => {
-    try { chapters = await (await fetch('/api/demo/chapters', { headers: token ? { 'X-DocBingo-Token': token } : {} })).json(); } catch {}
-  });
+  async function loadChapters(l) { try { chapters = await (await fetch('/api/demo/chapters?lang=' + l, { headers: token ? { 'X-DocBingo-Token': token } : {} })).json(); } catch {} }
+  onMount(() => loadChapters($lang));
+  $: loadChapters($lang);
+  const LANGS = [['fr', 'Français'], ['en', 'English'], ['de', 'Deutsch']];
   const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   function seek(at) { if (video) { video.currentTime = at; video.play(); } }
 </script>
@@ -21,7 +22,9 @@
     <!-- svelte-ignore a11y-media-has-caption -->
     <video bind:this={video} controls preload="metadata" playsinline style="width:100%; border-radius:8px; background:#000; aspect-ratio:16/9"
       src={'/api/demo/video?t=' + encodeURIComponent(token)} poster="/api/demo/poster">
-      <track kind="subtitles" srclang="fr" label="Français" src={'/api/demo/subtitles?t=' + encodeURIComponent(token)} default />
+      {#each LANGS as [code, label]}
+        <track kind="subtitles" srclang={code} {label} src={'/api/demo/subtitles?lang=' + code + '&t=' + encodeURIComponent(token)} default={code === $lang} />
+      {/each}
     </video>
     <div class="muted" style="margin-top:8px; font-size:12.5px">{$t('demo.note')}</div>
   </div>

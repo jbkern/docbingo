@@ -145,6 +145,9 @@ export async function initSchema() {
     created_at TEXT DEFAULT (datetime('now')),
     last_login TEXT
   )`);
+  await addCol('questions', 'source', "TEXT DEFAULT 'manual'");     // manual | import | ai | collection
+  await addCol('questions', 'deleted_at', 'TEXT');
+  await addCol('questions', 'origin_author', 'TEXT');                  // nom de l'auteur·e d'origine (collection importée)                     // corbeille (soft delete)
   await addCol('users', 'charter_at', 'TEXT');                     // date d'acceptation de la charte d'utilisation
   await addCol('users', 'charter_v', 'INTEGER DEFAULT 0');         // version acceptée
   await addCol('questions', 'author_id', 'INTEGER');

@@ -176,8 +176,8 @@ app.get('/api/demo/video', demoAuth, (req, res) => {
     fs.createReadStream(file, { start, end }).pipe(res);
   } else { res.setHeader('Content-Length', size); fs.createReadStream(file).pipe(res); }
 });
-app.get('/api/demo/subtitles', demoAuth, (req, res) => { const f = path.join(DEMO_DIR, 'demo.vtt'); if (!fs.existsSync(f)) return res.status(404).end(); res.setHeader('Content-Type', 'text/vtt; charset=utf-8'); fs.createReadStream(f).pipe(res); });
-app.get('/api/demo/chapters', demoAuth, (req, res) => { const f = path.join(DEMO_DIR, 'demo-chapters.json'); res.json(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : []); });
+app.get('/api/demo/subtitles', demoAuth, (req, res) => { const lang = ['en', 'de'].includes(req.query.lang) ? '-' + req.query.lang : ''; const f = path.join(DEMO_DIR, `demo${lang}.vtt`); if (!fs.existsSync(f)) return res.status(404).end(); res.setHeader('Content-Type', 'text/vtt; charset=utf-8'); fs.createReadStream(f).pipe(res); });
+app.get('/api/demo/chapters', demoAuth, (req, res) => { const f = path.join(DEMO_DIR, 'demo-chapters.json'); if (!fs.existsSync(f)) return res.json([]); const d = JSON.parse(fs.readFileSync(f, 'utf8')); res.json(Array.isArray(d) ? d : (d[req.query.lang] || d.fr || [])); });
 app.get('/api/demo/poster', (req, res) => { const f = path.join(DEMO_DIR, 'demo-poster.jpg'); if (!fs.existsSync(f)) return res.status(404).end(); res.setHeader('Content-Type', 'image/jpeg'); fs.createReadStream(f).pipe(res); });
 app.get('/api/demo/available', (req, res) => res.json({ available: fs.existsSync(path.join(DEMO_DIR, 'demo.mp4')) }));
 app.post('/api/me/password', h(async (req, res) => {
@@ -226,13 +226,14 @@ async function rowToQuestion(row) {
     options: j(row.options, []), correct: j(row.correct, []),
     image: row.image, explanation: row.explanation, lang: row.lang,
     difficulty: row.difficulty ?? 2, caseId: row.case_id ?? null, caseOrder: row.case_order ?? 0,
-    status: row.status || 'published', authorId: row.author_id ?? null, authorName: row.author_name ?? null, reviewNote: row.review_note ?? null,
+    status: row.status || 'published', authorId: row.author_id ?? null, authorName: row.origin_author ?? row.author_name ?? null, reviewNote: row.review_note ?? null,
+    source: row.source || 'manual', deletedAt: row.deleted_at ?? null,
     usedCount: row.used_count, createdAt: row.created_at, updatedAt: row.updated_at, tags
   };
 }
 const Q_SELECT = 'SELECT q.*, u.name AS author_name FROM questions q LEFT JOIN users u ON u.id = q.author_id';
 async function allQuestions(onlyPublished = false) {
-  const rows = await all(Q_SELECT + (onlyPublished ? " WHERE COALESCE(q.status, 'published') = 'published'" : '') + ' ORDER BY q.updated_at DESC');
+  const rows = await all(Q_SELECT + ' WHERE q.deleted_at IS NULL' + (onlyPublished ? " AND COALESCE(q.status, 'published') = 'published'" : '') + ' ORDER BY q.updated_at DESC');
   return Promise.all(rows.map(rowToQuestion));
 }
 async function getQuestion(id) { return rowToQuestion(await get(Q_SELECT + ' WHERE q.id = ?', [id])); }
@@ -296,6 +297,12 @@ app.get('/api/questions', h(async (req, res) => {
   res.json(rows);
 }));
 
+app.get('/api/questions/trash', h(async (req, res) => {
+  const rows = await all(Q_SELECT + ' WHERE q.deleted_at IS NOT NULL ORDER BY q.deleted_at DESC');
+  let qs = await Promise.all(rows.map(rowToQuestion));
+  if (req.user.role !== 'admin') qs = qs.filter(q => q.authorId === req.user.id);
+  res.json(qs);
+}));
 app.get('/api/questions/:id', h(async (req, res) => {
   const q = await getQuestion(req.params.id);
   if (q && req.user.role !== 'admin' && q.status !== 'published' && q.authorId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
@@ -317,10 +324,10 @@ app.post('/api/questions', charterRequired, h(async (req, res) => {
   if (err) return res.status(400).json({ error: err });
   const status = statusForCreate(req.user, b.status);
   const info = await run(
-    'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image || null, b.explanation || null, b.lang || 'fr',
-     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, status]);
-  await setQuestionTags(info.lastInsertRowid, b.tags);
+     [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, status, b.source === 'ai' ? 'ai' : 'manual']);
+  await setQuestionTags(info.lastInsertRowid, b.source === 'ai' ? [...(b.tags || []), 'ia'] : b.tags);
   res.json(await getQuestion(info.lastInsertRowid));
 }));
 
@@ -356,14 +363,48 @@ app.post('/api/questions/:id/review', adminOnly, h(async (req, res) => {
   res.json(await getQuestion(req.params.id));
 }));
 
+/* Corbeille : la suppression est d'abord logique (deleted_at) ; les questions en corbeille n'entrent jamais dans une session. */
+const canTrash = (user, q) => user.role === 'admin' || (q.authorId === user.id && q.status !== 'published');
+app.delete('/api/questions/trash', h(async (req, res) => {
+  const where = req.user.role === 'admin' ? 'deleted_at IS NOT NULL' : 'deleted_at IS NOT NULL AND author_id = ?';
+  const args = req.user.role === 'admin' ? [] : [req.user.id];
+  const n = (await get(`SELECT COUNT(*) AS c FROM questions WHERE ${where}`, args)).c;
+  await run(`DELETE FROM question_tags WHERE question_id IN (SELECT id FROM questions WHERE ${where})`, args);
+  await run(`DELETE FROM questions WHERE ${where}`, args);
+  await run('DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM question_tags)');
+  res.json({ ok: true, deleted: n });
+}));
+app.post('/api/questions/:id/restore', h(async (req, res) => {
+  const cur = await rowToQuestion(await get(Q_SELECT + ' WHERE q.id = ?', [req.params.id]));
+  if (!cur) return res.status(404).json({ error: 'not_found' });
+  if (req.user.role !== 'admin' && cur.authorId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  await run(`UPDATE questions SET deleted_at = NULL, updated_at = datetime('now') WHERE id = ?`, [req.params.id]);
+  res.json(await getQuestion(req.params.id));
+}));
 app.delete('/api/questions/:id', h(async (req, res) => {
   const cur = await getQuestion(req.params.id);
   if (!cur) return res.status(404).json({ error: 'not_found' });
-  if (req.user.role !== 'admin' && (cur.authorId !== req.user.id || cur.status === 'published')) return res.status(403).json({ error: 'forbidden' });
-  await run('DELETE FROM questions WHERE id = ?', [req.params.id]);
-  await run('DELETE FROM question_tags WHERE question_id = ?', [req.params.id]);
+  if (!canTrash(req.user, cur)) return res.status(403).json({ error: 'forbidden' });
+  await run(`UPDATE questions SET deleted_at = datetime('now') WHERE id = ?`, [req.params.id]);
+  res.json({ ok: true, trashed: true });
+}));
+/* Édition en lot des mots-clés */
+app.post('/api/questions/bulk-tags', h(async (req, res) => {
+  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(Number).filter(Boolean);
+  const norm = (a) => (Array.isArray(a) ? a : []).map(t => String(t).trim().toLowerCase().replace(/^#/, '')).filter(Boolean);
+  const add = norm(req.body?.add), remove = norm(req.body?.remove);
+  if (!ids.length || (!add.length && !remove.length)) return res.status(400).json({ error: 'nothing_to_do' });
+  let n = 0;
+  for (const id of ids) {
+    const q = await getQuestion(id);
+    if (!q || (req.user.role !== 'admin' && q.authorId !== req.user.id)) continue;
+    const tags = [...new Set([...q.tags.filter(t => !remove.includes(t)), ...add])];
+    await setQuestionTags(id, tags);
+    await run(`UPDATE questions SET updated_at = datetime('now') WHERE id = ?`, [id]);
+    n++;
+  }
   await run('DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM question_tags)');
-  res.json({ ok: true });
+  res.json({ ok: true, updated: n });
 }));
 
 app.post('/api/questions/:id/duplicate', h(async (req, res) => {
@@ -378,7 +419,7 @@ app.post('/api/questions/:id/duplicate', h(async (req, res) => {
 
 app.post('/api/questions/check-duplicate', h(async (req, res) => {
   const { statement, excludeId } = req.body;
-  const rows = await all('SELECT id, statement FROM questions');
+  const rows = await all('SELECT id, statement FROM questions WHERE deleted_at IS NULL');
   const similar = rows
     .filter(r => r.id !== excludeId)
     .map(r => ({ id: r.id, statement: r.statement, score: similarity(statement || '', r.statement) }))
@@ -389,7 +430,7 @@ app.post('/api/questions/check-duplicate', h(async (req, res) => {
 
 app.get('/api/tags', h(async (req, res) => {
   res.json(await all(
-    'SELECT t.name, COUNT(qt.question_id) AS count FROM tags t LEFT JOIN question_tags qt ON qt.tag_id = t.id GROUP BY t.id ORDER BY t.name'));
+    'SELECT t.name, COUNT(q.id) AS count FROM tags t LEFT JOIN question_tags qt ON qt.tag_id = t.id LEFT JOIN questions q ON q.id = qt.question_id AND q.deleted_at IS NULL GROUP BY t.id ORDER BY t.name'));
 }));
 
 /* ---------- Images (stockées en base — le disque de Render est éphémère) ---------- */
@@ -526,10 +567,12 @@ app.post('/api/import/commit', charterRequired, h(async (req, res) => {
   for (const b of list) {
     if (validateQuestion(b) || existing.has(b.statement.trim().toLowerCase())) { skipped++; continue; }
     const info = await run(
-      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image || null, b.explanation || null, b.lang || 'fr',
-       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, statusForCreate(req.user, req.body?.status)]);
-    await setQuestionTags(info.lastInsertRowid, b.tags);
+       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseId || null, Number(b.caseOrder) || 0, req.user.id, statusForCreate(req.user, req.body?.status),
+       (b.source === 'ai' || req.body?.source === 'ai') ? 'ai' : 'import']);
+    // provenance IA : mot-clé #ia ajouté automatiquement
+    await setQuestionTags(info.lastInsertRowid, (b.source === 'ai' || req.body?.source === 'ai') ? [...(b.tags || []), 'ia'] : b.tags);
     existing.add(b.statement.trim().toLowerCase());
     created++;
   }
@@ -572,7 +615,7 @@ ${source.slice(0, 60000)}
   let questions = [];
   try { questions = JSON.parse(jsonText); } catch { return res.status(502).json({ error: 'Réponse IA illisible, réessayez.' }); }
   questions = questions.filter(q => q?.statement && Array.isArray(q.options) && q.options.length >= 2)
-    .map(q => ({ ...q, tags: [...new Set([...(q.tags || []), ...tags])], difficulty: Number(q.difficulty) || Number(difficulty) || 2, lang }));
+    .map(q => ({ ...q, tags: [...new Set([...(q.tags || []), ...tags, 'ia'])], difficulty: Number(q.difficulty) || Number(difficulty) || 2, lang, source: 'ai' }));
   res.json({ questions, usage: msg.usage });
 }));
 
@@ -849,7 +892,7 @@ app.get('/api/p/:token/leaderboard', h(async (req, res) => {
 
 /* ---- Statistiques ---- */
 app.get('/api/stats/questions', h(async (req, res) => {
-  const rows = await all('SELECT q.id, q.statement, q.difficulty, s.asked, s.answered, s.correct FROM questions q JOIN question_stats s ON s.question_id = q.id WHERE s.answered > 0 ORDER BY (CAST(s.correct AS REAL) / s.answered) ASC');
+  const rows = await all('SELECT q.id, q.statement, q.difficulty, s.asked, s.answered, s.correct FROM questions q JOIN question_stats s ON s.question_id = q.id WHERE s.answered > 0 AND q.deleted_at IS NULL ORDER BY (CAST(s.correct AS REAL) / s.answered) ASC');
   const out = [];
   for (const r of rows) {
     const tags = (await all('SELECT t.name FROM tags t JOIN question_tags qt ON qt.tag_id = t.id WHERE qt.question_id = ?', [r.id])).map(x => x.name);
@@ -893,7 +936,7 @@ app.get('/api/collections/export', h(async (req, res) => {
   const cases = {}; for (const q of qs) if (q.caseId && !cases[q.caseId]) { const c = await get('SELECT * FROM clinical_cases WHERE id = ?', [q.caseId]); if (c) cases[q.caseId] = { title: c.title, intro: c.intro }; }
   res.setHeader('Content-Disposition', `attachment; filename="docbingo-collection-${tags.join('-') || 'complete'}.json"`);
   res.json({ format: 'docbingo-collection', version: 1, exportedAt: new Date().toISOString(), tags, count: qs.length,
-    questions: qs.map(q => ({ statement: q.statement, options: q.options, correct: q.correct, explanation: q.explanation, tags: q.tags, difficulty: q.difficulty, lang: q.lang, image: q.image, caseKey: q.caseId ? String(q.caseId) : null, caseOrder: q.caseOrder })),
+    questions: qs.map(q => ({ statement: q.statement, options: q.options, correct: q.correct, explanation: q.explanation, tags: q.tags, difficulty: q.difficulty, lang: q.lang, image: q.image, caseKey: q.caseId ? String(q.caseId) : null, caseOrder: q.caseOrder, authorName: q.authorName, source: q.source })),
     cases, images });
 }));
 const collUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 40 * 1024 * 1024 } });
@@ -910,10 +953,11 @@ app.post('/api/collections/import', collUpload.single('file'), h(async (req, res
   for (const b of data.questions) {
     if (validateQuestion(b) || existing.has(b.statement.trim().toLowerCase())) { skipped++; continue; }
     const info = await run(
-      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO questions (statement, options, correct, image, explanation, lang, difficulty, case_id, case_order, author_id, status, source, origin_author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [b.statement.trim(), JSON.stringify(b.options), JSON.stringify(b.correct), b.image ? imgMap[b.image] || null : null, b.explanation || null, b.lang || 'fr',
-       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseKey ? caseMap[b.caseKey] || null : null, Number(b.caseOrder) || 0, req.user.id, status]);
-    await setQuestionTags(info.lastInsertRowid, b.tags);
+       [1,2,3].includes(Number(b.difficulty)) ? Number(b.difficulty) : 2, b.caseKey ? caseMap[b.caseKey] || null : null, Number(b.caseOrder) || 0, req.user.id, status,
+       b.source === 'ai' ? 'ai' : 'collection', b.authorName || null]);
+    await setQuestionTags(info.lastInsertRowid, b.source === 'ai' ? [...(b.tags || []), 'ia'] : b.tags);
     existing.add(b.statement.trim().toLowerCase()); created++;
   }
   res.json({ created, skipped, cases: Object.keys(caseMap).length, images: Object.keys(imgMap).length });

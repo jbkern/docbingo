@@ -212,7 +212,7 @@
 
   <div>
     <label>{$t('settings.help')}</label>
-    <div class="row" style="gap:8px"><a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a><a class="btn secondary" href="#/about">ⓘ {$t('about.title')}</a></div>
+    <div class="row" style="gap:8px"><a class="btn secondary" href={$lang === 'fr' ? '/guide.html' : '/guide-' + $lang + '.html'} target="_blank">📖 {$t('settings.openguide')}</a><a class="btn secondary" href="#/about">ⓘ {$t('about.title')}</a></div>
   </div>
 
   <div>

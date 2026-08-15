@@ -230,7 +230,7 @@
       {:else if route.page === 'charter'}<Charter />
       {:else}<Home {user} />{/if}
     </main>
-    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{ct.title}</a> · <a href="/guide.html" target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
+    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{ct.title}</a> · <a href={$lang === 'fr' ? '/guide.html' : '/guide-' + $lang + '.html'} target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
   </div>
 {/if}
 

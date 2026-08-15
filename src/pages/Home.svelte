@@ -96,7 +96,7 @@
         <li>{$t('home.step4')}</li>
       </ol>
       <div class="row" style="margin-top:12px; gap:8px; flex-wrap:wrap">
-        <a class="btn secondary" href="/guide.html" target="_blank">📖 {$t('settings.openguide')}</a>
+        <a class="btn secondary" href={$lang === 'fr' ? '/guide.html' : '/guide-' + $lang + '.html'} target="_blank">📖 {$t('settings.openguide')}</a>
         <a class="btn secondary" href="#/demo">🎬 {$t('demo.title')}</a>
       </div>
     </div>

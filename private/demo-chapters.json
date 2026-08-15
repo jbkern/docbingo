@@ -1,86 +1,260 @@
-[
- {
-  "at": 1.9,
-  "text": "DocBingo — le bingo QCM médical. Connectez-vous avec votre email et votre mot de passe."
- },
- {
-  "at": 6.3,
-  "text": "L'accueil : session en cours, indicateurs de la banque, dernières sessions et actions rapides."
- },
- {
-  "at": 11.8,
-  "text": "La banque de questions : recherche, filtres par mots-clés, niveau de difficulté, statut de validation."
- },
- {
-  "at": 15.9,
-  "text": "Un clic sur un mot-clé filtre la banque — par exemple #cardiologie."
- },
- {
-  "at": 19.3,
-  "text": "Créer une question : énoncé, propositions A à E, bonne(s) réponse(s), image, explication, difficulté, cas clinique, mots-clés."
- },
- {
-  "at": 32.7,
-  "text": "Un administrateur publie directement ; un auteur propose, et la question passe par la file de validation."
- },
- {
-  "at": 37.2,
-  "text": "Importez des questions depuis Excel, Word ou un texte collé — ou générez des QCM par IA à partir d'un article, toujours avec relecture avant enregistrement."
- },
- {
-  "at": 44.6,
-  "text": "Créer une session : thème ou aléatoire, nombre de questions ou durée, temps par question, participants, papier et/ou smartphone…"
- },
- {
-  "at": 47.9,
-  "text": "DocBingo recommande la taille de grille par simulation et alerte si la banque est insuffisante."
- },
- {
-  "at": 49.7,
-  "text": "Deux modes de jeu : bonne réponse requise (serious game) ou pur hasard (détente)."
- },
- {
-  "at": 53.5,
-  "text": "Le détail de la session : paramètres, grilles uniques à imprimer (2 par A4), ordre des questions modifiable, diapositives libres."
- },
- {
-  "at": 59,
-  "text": "L'animation : les participants rejoignent sur smartphone avec le code de session — ou jouent sur papier."
- },
- {
-  "at": 70.6,
-  "text": "Le numéro tiré s'affiche en grand, le compte à rebours tourne, la réponse apparaît automatiquement à zéro."
- },
- {
-  "at": 77.4,
-  "text": "La bonne réponse s'illumine avec l'explication ; la répartition des réponses de la salle s'affiche."
- },
- {
-  "at": 85.9,
-  "text": "Mode présentateur : votre écran devient une console (bonne réponse, question suivante, commandes, participants, télécommande) et l'écran public se projette à part."
- },
- {
-  "at": 99.7,
-  "text": "Sur smartphone, les grilles se cochent automatiquement et le bingo est détecté et annoncé par le serveur — sur papier, la vérification par code de grille prend quelques secondes."
- },
- {
-  "at": 124.7,
-  "text": "Sur smartphone, les grilles se cochent automatiquement et le bingo est détecté et annoncé par le serveur — sur papier, la vérification par code de grille prend quelques secondes."
- },
- {
-  "at": 133,
-  "text": "Fin de session : bingos, podium et fiche de synthèse PDF pour les participants."
- },
- {
-  "at": 137.7,
-  "text": "Les statistiques : questions les plus ratées, réussite par mot-clé, palmarès — pour ajuster votre enseignement."
- },
- {
-  "at": 142.8,
-  "text": "Réglages : trois thèmes visuels, français / anglais / allemand, ambiances sonores, comptes, collections partageables, sauvegardes."
- },
- {
-  "at": 153.2,
-  "text": "DocBingo — apprendre en jouant. Bonne session !"
- }
-]
+{
+ "fr": [
+  {
+   "at": 1.9,
+   "text": "DocBingo — le bingo QCM médical. Connectez-vous avec votre email et votre mot de passe."
+  },
+  {
+   "at": 6.3,
+   "text": "L'accueil : session en cours, indicateurs de la banque, dernières sessions et actions rapides."
+  },
+  {
+   "at": 11.8,
+   "text": "La banque de questions : recherche, filtres par mots-clés, niveau de difficulté, statut de validation."
+  },
+  {
+   "at": 15.9,
+   "text": "Un clic sur un mot-clé filtre la banque — par exemple #cardiologie."
+  },
+  {
+   "at": 19.3,
+   "text": "Créer une question : énoncé, propositions A à E, bonne(s) réponse(s), image, explication, difficulté, cas clinique, mots-clés."
+  },
+  {
+   "at": 32.7,
+   "text": "Un administrateur publie directement ; un auteur propose, et la question passe par la file de validation."
+  },
+  {
+   "at": 37.2,
+   "text": "Importez des questions depuis Excel, Word ou un texte collé — ou générez des QCM par IA à partir d'un article, toujours avec relecture avant enregistrement."
+  },
+  {
+   "at": 44.6,
+   "text": "Créer une session : thème ou aléatoire, nombre de questions ou durée, temps par question, participants, papier et/ou smartphone…"
+  },
+  {
+   "at": 47.9,
+   "text": "DocBingo recommande la taille de grille par simulation et alerte si la banque est insuffisante."
+  },
+  {
+   "at": 49.7,
+   "text": "Deux modes de jeu : bonne réponse requise (serious game) ou pur hasard (détente)."
+  },
+  {
+   "at": 53.5,
+   "text": "Le détail de la session : paramètres, grilles uniques à imprimer (2 par A4), ordre des questions modifiable, diapositives libres."
+  },
+  {
+   "at": 59,
+   "text": "L'animation : les participants rejoignent sur smartphone avec le code de session — ou jouent sur papier."
+  },
+  {
+   "at": 70.6,
+   "text": "Le numéro tiré s'affiche en grand, le compte à rebours tourne, la réponse apparaît automatiquement à zéro."
+  },
+  {
+   "at": 77.4,
+   "text": "La bonne réponse s'illumine avec l'explication ; la répartition des réponses de la salle s'affiche."
+  },
+  {
+   "at": 85.9,
+   "text": "Mode présentateur : votre écran devient une console (bonne réponse, question suivante, commandes, participants, télécommande) et l'écran public se projette à part."
+  },
+  {
+   "at": 99.7,
+   "text": "Sur smartphone, les grilles se cochent automatiquement et le bingo est détecté et annoncé par le serveur — sur papier, la vérification par code de grille prend quelques secondes."
+  },
+  {
+   "at": 124.7,
+   "text": "Un autre bingo ! Chacun est annoncé, vérifié et enregistré — plusieurs bingos peuvent se succéder."
+  },
+  {
+   "at": 133,
+   "text": "Fin de session : bingos, podium et fiche de synthèse PDF pour les participants."
+  },
+  {
+   "at": 137.7,
+   "text": "Les statistiques : questions les plus ratées, réussite par mot-clé, palmarès — pour ajuster votre enseignement."
+  },
+  {
+   "at": 142.8,
+   "text": "Réglages : trois thèmes visuels, français / anglais / allemand, ambiances sonores, comptes, collections partageables, sauvegardes."
+  },
+  {
+   "at": 153.2,
+   "text": "DocBingo — apprendre en jouant. Bonne session !"
+  }
+ ],
+ "en": [
+  {
+   "at": 1.9,
+   "text": "DocBingo — the medical MCQ bingo. Sign in with your email and password."
+  },
+  {
+   "at": 6.3,
+   "text": "The home page: session in progress, question-bank indicators, latest sessions and quick actions."
+  },
+  {
+   "at": 11.8,
+   "text": "The question bank: search, keyword filters, difficulty level, review status."
+  },
+  {
+   "at": 15.9,
+   "text": "Clicking a keyword filters the bank — for example #cardiologie."
+  },
+  {
+   "at": 19.3,
+   "text": "Create a question: statement, options A to E, correct answer(s), image, explanation, difficulty, clinical case, keywords."
+  },
+  {
+   "at": 32.7,
+   "text": "An administrator publishes directly; an author proposes, and the question goes through the review queue."
+  },
+  {
+   "at": 37.2,
+   "text": "Import questions from Excel, Word or pasted text — or generate MCQs by AI from an article, always with review before saving."
+  },
+  {
+   "at": 44.6,
+   "text": "Create a session: theme or random, number of questions or duration, time per question, participants, paper and/or smartphone…"
+  },
+  {
+   "at": 47.9,
+   "text": "DocBingo recommends the card size by simulation and warns if the bank is too small."
+  },
+  {
+   "at": 49.7,
+   "text": "Two game modes: correct answer required (serious game) or pure luck (relaxed)."
+  },
+  {
+   "at": 53.5,
+   "text": "Session details: settings, unique printable cards (2 per A4), editable question order, free slides."
+  },
+  {
+   "at": 59,
+   "text": "Live play: participants join on their smartphone with the session code — or play on paper."
+  },
+  {
+   "at": 70.6,
+   "text": "The drawn number is shown large, the countdown runs, the answer appears automatically at zero."
+  },
+  {
+   "at": 77.4,
+   "text": "The correct answer lights up with the explanation; the distribution of the room's answers is shown."
+  },
+  {
+   "at": 85.9,
+   "text": "Presenter mode: your screen becomes a console (correct answer, next question, commands, participants, remote) and the public display is projected separately."
+  },
+  {
+   "at": 99.7,
+   "text": "On smartphones, cards are ticked automatically and the bingo is detected and announced by the server — on paper, checking by card code takes a few seconds."
+  },
+  {
+   "at": 124.7,
+   "text": "Another bingo! Each one is announced, verified and recorded — several bingos can follow one another."
+  },
+  {
+   "at": 133,
+   "text": "End of session: bingos, podium and PDF summary sheet for participants."
+  },
+  {
+   "at": 137.7,
+   "text": "Statistics: most-missed questions, success by keyword, leaderboard — to adjust your teaching."
+  },
+  {
+   "at": 142.8,
+   "text": "Settings: three visual themes, French / English / German, sound ambiences, accounts, shareable collections, backups."
+  },
+  {
+   "at": 153.2,
+   "text": "DocBingo — learning by playing. Enjoy your session!"
+  }
+ ],
+ "de": [
+  {
+   "at": 1.9,
+   "text": "DocBingo — das medizinische MC-Bingo. Melden Sie sich mit E-Mail und Passwort an."
+  },
+  {
+   "at": 6.3,
+   "text": "Die Startseite: laufende Sitzung, Kennzahlen der Fragenbank, letzte Sitzungen und Schnellaktionen."
+  },
+  {
+   "at": 11.8,
+   "text": "Die Fragenbank: Suche, Schlagwortfilter, Schwierigkeitsgrad, Prüfstatus."
+  },
+  {
+   "at": 15.9,
+   "text": "Ein Klick auf ein Schlagwort filtert die Bank — zum Beispiel #cardiologie."
+  },
+  {
+   "at": 19.3,
+   "text": "Eine Frage erstellen: Fragetext, Antworten A bis E, richtige Antwort(en), Bild, Erklärung, Schwierigkeit, klinischer Fall, Schlagwörter."
+  },
+  {
+   "at": 32.7,
+   "text": "Administrator/innen veröffentlichen direkt; Autor/innen schlagen vor, und die Frage durchläuft die Prüfung."
+  },
+  {
+   "at": 37.2,
+   "text": "Fragen aus Excel, Word oder eingefügtem Text importieren — oder MC-Fragen per KI aus einem Artikel generieren, immer mit Prüfung vor dem Speichern."
+  },
+  {
+   "at": 44.6,
+   "text": "Eine Sitzung anlegen: Thema oder Zufall, Anzahl Fragen oder Dauer, Zeit pro Frage, Teilnehmende, Papier und/oder Smartphone…"
+  },
+  {
+   "at": 47.9,
+   "text": "DocBingo empfiehlt die Kartengrösse per Simulation und warnt, wenn die Bank zu klein ist."
+  },
+  {
+   "at": 49.7,
+   "text": "Zwei Spielmodi: richtige Antwort erforderlich (Serious Game) oder reiner Zufall (entspannt)."
+  },
+  {
+   "at": 53.5,
+   "text": "Die Sitzungsdetails: Einstellungen, einzigartige druckbare Karten (2 pro A4), änderbare Fragenreihenfolge, freie Folien."
+  },
+  {
+   "at": 59,
+   "text": "Das Live-Spiel: Teilnehmende treten per Smartphone mit dem Sitzungscode bei — oder spielen auf Papier."
+  },
+  {
+   "at": 70.6,
+   "text": "Die gezogene Nummer erscheint gross, der Countdown läuft, die Antwort wird bei null automatisch angezeigt."
+  },
+  {
+   "at": 77.4,
+   "text": "Die richtige Antwort leuchtet mit der Erklärung auf; die Verteilung der Antworten im Saal wird angezeigt."
+  },
+  {
+   "at": 85.9,
+   "text": "Präsentationsmodus: Ihr Bildschirm wird zur Konsole (richtige Antwort, nächste Frage, Befehle, Teilnehmende, Fernbedienung), der Publikumsbildschirm wird separat projiziert."
+  },
+  {
+   "at": 99.7,
+   "text": "Auf dem Smartphone werden die Karten automatisch abgehakt, das Bingo wird vom Server erkannt und angekündigt — auf Papier dauert die Prüfung per Kartencode einige Sekunden."
+  },
+  {
+   "at": 124.7,
+   "text": "Noch ein Bingo! Jedes wird angekündigt, geprüft und festgehalten — mehrere Bingos können aufeinander folgen."
+  },
+  {
+   "at": 133,
+   "text": "Sitzungsende: Bingos, Podest und PDF-Zusammenfassung für die Teilnehmenden."
+  },
+  {
+   "at": 137.7,
+   "text": "Die Statistiken: am häufigsten verfehlte Fragen, Erfolg pro Schlagwort, Rangliste — um Ihren Unterricht anzupassen."
+  },
+  {
+   "at": 142.8,
+   "text": "Einstellungen: drei visuelle Themen, Französisch / Englisch / Deutsch, Klangatmosphären, Konten, teilbare Sammlungen, Sicherungen."
+  },
+  {
+   "at": 153.2,
+   "text": "DocBingo — spielend lernen. Viel Spass bei der Sitzung!"
+  }
+ ]
+}

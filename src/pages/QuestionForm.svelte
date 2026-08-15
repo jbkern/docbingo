@@ -86,7 +86,10 @@
 <div class="row" style="margin-bottom:16px">
   <a href="#/questions" class="muted" style="text-decoration:none">← {$t('questions.title')}</a>
 </div>
-<h1 style="margin-bottom:10px">{isNew ? $t('questions.new') : $t('common.edit')}</h1>
+<h1 style="margin-bottom:6px">{isNew ? $t('questions.new') : $t('common.edit')}</h1>
+{#if !isNew && (q.authorName || q.source === 'ai')}
+  <div class="muted" style="margin-bottom:10px; font-size:13px">{$t('q.author')} : <b>{q.authorName || '—'}</b>{#if q.source === 'ai'} · <span title={$t('q.aihint')}>🤖 {$t('q.source.ai')}</span>{/if}{#if q.createdAt} · {q.createdAt.slice(0, 10)}{/if}</div>
+{/if}
 <div class="alert info" style="margin-bottom:14px; font-size:12.5px; line-height:1.45">📜 {$t('charter.reminder')} <a href="#/charter">{$t('charter.link')}</a></div>
 
 {#if error}<div class="alert error" style="margin-bottom:14px">⚠️ {error}</div>{/if}

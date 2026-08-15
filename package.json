@@ -1,6 +1,6 @@
 {
   "name": "docbingo",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "DocBingo — plateforme de bingo QCM médical (serious game)",
   "type": "module",
   "scripts": {
