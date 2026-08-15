@@ -1,0 +1,34 @@
+name: Déployer sur Render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: render-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déclencher le déploiement Render et attendre le « live »
+        env:
+          RK: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -e
+          SID=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?name=docbingo&limit=5" | jq -r '.[0].service.id')
+          echo "Service : $SID"
+          DEP=$(curl -sf -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d '{"clearCache":"do_not_clear"}' "https://api.render.com/v1/services/$SID/deploys" | jq -r '.id')
+          echo "Déploiement : $DEP"
+          for i in $(seq 1 60); do
+            ST=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/deploys/$DEP" | jq -r '.status')
+            echo "[$i] $ST"
+            case "$ST" in
+              live) echo "✅ live" ; exit 0 ;;
+              build_failed|update_failed|canceled|deactivated|pre_deploy_failed) echo "❌ $ST"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "⏱ délai dépassé"; exit 1
