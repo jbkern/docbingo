@@ -17,20 +17,21 @@ app.get('/api/ping', (req, res) => res.json({ ok: true, at: Date.now() }));
 
 /* ---------- Auth (simple password, active only if DOCBINGO_PASSWORD is set) ---------- */
 const PASSWORD = process.env.DOCBINGO_PASSWORD || null;
-const tokens = new Set();
+/* Jeton sans état (dérivé du mot de passe) : survit aux redémarrages du serveur,
+   l'utilisateur n'a pas à se reconnecter après chaque réveil de l'hébergement. */
+const SESSION_TOKEN = PASSWORD ? crypto.createHmac('sha256', 'docbingo-session').update(PASSWORD).digest('hex') : null;
+const safeEqual = (a, b) => typeof a === 'string' && a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 app.post('/api/login', (req, res) => {
   if (!PASSWORD) return res.json({ ok: true, token: null });
-  if (req.body?.password === PASSWORD) {
-    const token = crypto.randomBytes(24).toString('hex');
-    tokens.add(token);
-    return res.json({ ok: true, token });
+  if (typeof req.body?.password === 'string' && safeEqual(req.body.password, PASSWORD)) {
+    return res.json({ ok: true, token: SESSION_TOKEN });
   }
   res.status(401).json({ ok: false });
 });
 app.use('/api', (req, res, next) => {
   if (!PASSWORD || req.path === '/login' || req.path === '/ping') return next();
   const token = req.headers['x-docbingo-token'];
-  if (token && tokens.has(token)) return next();
+  if (token && safeEqual(String(token), SESSION_TOKEN)) return next();
   res.status(401).json({ error: 'auth_required' });
 });
 
