@@ -1,0 +1,50 @@
+name: Charger des séries de questions (prod)
+
+on:
+  workflow_dispatch:
+    inputs:
+      series:
+        description: "Séries à charger (fichiers scripts/series/*.json, séparés par des virgules)"
+        default: "en2026,smartermedicine"
+      tag_existing:
+        description: "Ajouter le mot-clé « démonstration » aux questions déjà présentes avant l'import ?"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Importer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: https://docbingo.ch
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+          SERIES: ${{ inputs.series }}
+          TAG_EXISTING: ${{ inputs.tag_existing }}
+        run: |
+          set -e
+          TOKEN=$(curl -sf -X POST -H "Content-Type: application/json" -d "{\"email\":\"jeanbaptiste.kern@hibroye.ch\",\"password\":\"$PW\"}" "$URL/api/login" | jq -r '.token')
+          echo "::add-mask::$TOKEN"
+          H="X-DocBingo-Token: $TOKEN"
+          REPORT=""
+          if [ "$TAG_EXISTING" = "true" ]; then
+            IDS=$(curl -sf -H "$H" "$URL/api/questions" | jq -c '[.[].id]')
+            R=$(curl -sf -X POST -H "$H" -H "Content-Type: application/json" -d "{\"ids\":$IDS,\"add\":[\"démonstration\"]}" "$URL/api/questions/bulk-tags")
+            REPORT="$REPORT- Mot-clé « démonstration » ajouté : \`$R\` (ids $IDS)\n"
+          fi
+          IFS=',' read -ra SS <<< "$SERIES"
+          for s in "${SS[@]}"; do s=$(echo "$s" | xargs); F="scripts/series/$s.json"
+            [ -f "$F" ] || { REPORT="$REPORT- $s : fichier introuvable\n"; continue; }
+            BODY=$(jq -c '{questions: .questions, status: (.status // "published"), source: "import"}' "$F")
+            R=$(curl -s -w " [HTTP %{http_code}]" -X POST -H "$H" -H "Content-Type: application/json" -d "$BODY" "$URL/api/import/commit")
+            REPORT="$REPORT- $s ($(jq '.questions|length' "$F") questions) : \`$R\`\n"
+          done
+          N=$(curl -sf -H "$H" "$URL/api/questions" | jq 'length')
+          BODY=$(printf '**Chargement de séries** (%s)\n\n%b\nTotal questions en banque : **%s**\n\n_Généré le %s_' "$URL" "$REPORT" "$N" "$(date -u +%FT%TZ)")
+          gh issue comment -R ${{ github.repository }} 2 --body "$BODY"

@@ -1,0 +1,76 @@
+{
+  "name": "smarter medicine — listes Top 5 SSMIG (#smartermedicine)",
+  "status": "published",
+  "questions": [
+    {
+      "statement": "Patient·e de 68 ans hospitalisé·e en médecine interne pour une pneumonie, stable : selon la liste Top 5 « médecine interne générale hospitalière » (SSMIG 2016), quelle attitude concernant les prises de sang est recommandée ?",
+      "options": ["Un bilan sanguin quotidien systématique jusqu'à la sortie", "Ne prescrire des analyses (et des examens radiologiques) qu'en réponse à une question clinique précise, sans batteries d'examens à intervalles réguliers", "Un bilan complet tous les deux jours", "Une gazométrie artérielle chaque matin", "Un bilan hépatique complet à l'admission et à la sortie pour tout·e patient·e"],
+      "correct": [1],
+      "explanation": "Recommandation n° 1 (2016) : « Ne pas faire de prises de sang à intervalles réguliers (par ex. chaque jour) ou planifier des batteries d'examens, y compris radiographiques, sans répondre à une question clinique spécifique. » Les prélèvements répétés favorisent l'anémie iatrogène, les faux positifs et les coûts. Réf. : smarter medicine / SSMIG, Liste Top 5 Médecine interne générale hospitalière 2016 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "biologie"], "difficulty": 1, "lang": "fr"
+    },
+    {
+      "statement": "Concernant les sondes urinaires à demeure chez les patient·es hospitalisé·es, que recommande la liste Top 5 SSMIG (hospitalière 2016) ?",
+      "options": ["Poser une sonde chez toute personne incontinente pour protéger la peau", "Maintenir la sonde pour faciliter la surveillance de la diurèse", "Ne pas poser ni laisser en place une sonde urinaire uniquement pour des raisons de commodité (incontinence, surveillance de la diurèse)", "Changer la sonde chaque semaine", "Poser une sonde systématiquement au-delà de 80 ans"],
+      "correct": [2],
+      "explanation": "Recommandation n° 2 (2016) : les sondes urinaires sans indication stricte (rétention, obstruction, chirurgie urologique, soins de fin de vie, plaies sacrées chez l'incontinent…) exposent aux infections urinaires nosocomiales, au délirium et à l'immobilisation ; réévaluer l'indication chaque jour. Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2016 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "infectiologie"], "difficulty": 1, "lang": "fr"
+    },
+    {
+      "statement": "Patient·e stable, sans maladie cardiovasculaire, hémoglobine à 72 g/L sans saignement actif : quel seuil transfusionnel retient la liste Top 5 SSMIG (hospitalière 2016) ?",
+      "options": ["Transfuser dès Hb < 100 g/L", "Transfuser dès Hb < 90 g/L", "Seuil de 70 g/L (80 g/L en cas de maladie cardiovasculaire) et transfuser le nombre minimum de culots nécessaires, un à la fois", "Transfuser deux culots d'emblée pour atteindre 100 g/L", "Ne jamais transfuser sans avis hématologique"],
+      "correct": [2],
+      "explanation": "Recommandation n° 3 (2016) : « Ne pas transfuser plus que le nombre minimum de culots érythrocytaires nécessaires », avec des seuils restrictifs de 70 g/L (patient·es stables non cardiaques) et 80 g/L (maladie cardiovasculaire) ; réévaluer après chaque culot. Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2016 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "hematologie"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "Personne âgée hospitalisée présentant une insomnie et une agitation nocturne : que dit la liste Top 5 SSMIG (hospitalière 2016) ?",
+      "options": ["Prescrire une benzodiazépine à courte durée d'action au coucher", "Prescrire un « Z-drug » (zolpidem) plutôt qu'une benzodiazépine", "Ne pas utiliser de benzodiazépines ni d'autres sédatifs-hypnotiques pour l'insomnie, l'agitation ou l'état confusionnel aigu ; privilégier les mesures non médicamenteuses", "Associer benzodiazépine et neuroleptique", "Prescrire une contention physique préventive"],
+      "correct": [2],
+      "explanation": "Recommandation n° 5 (2016) : chez les personnes âgées, les benzodiazépines et sédatifs-hypnotiques augmentent le risque de chutes, de fractures, de délirium et de déclin cognitif ; hygiène du sommeil, réorientation, mobilisation, lumière du jour, traitement des causes. La même liste rappelle de ne pas laisser les personnes âgées alitées (recommandation n° 4). Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2016 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "geriatrie"], "difficulty": 1, "lang": "fr"
+    },
+    {
+      "statement": "Patient·e de 55 ans hospitalisé·e pour une colique néphrétique, mobile, sans antécédent : concernant la prophylaxie thromboembolique, que recommande la liste Top 5 SSMIG (hospitalière 2023) ?",
+      "options": ["HBPM prophylactique systématique pour tout·e patient·e hospitalisé·e", "Pas d'anticoagulation prophylactique chez les patient·es en soins aigus à faible risque thromboembolique, identifié·es par un score validé (Genève, Padoue, IMPROVE)", "Aspirine à faible dose pour tou·tes", "Bas de contention obligatoires", "Anticoagulation curative préventive"],
+      "correct": [1],
+      "explanation": "Recommandation n° 1 (2023) : chez les patient·es à faible risque selon un score validé, l'incidence d'événements thromboemboliques reste < 1 % à 90 jours ; la prophylaxie systématique expose à des hémorragies sans bénéfice. Réf. : smarter medicine / SSMIG, Liste Top 5 Médecine interne générale hospitalière 2023 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "anticoagulation"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "CRP à 120 mg/L et procalcitonine légèrement élevée chez un·e patient·e afébrile, sans foyer clinique, au 3e jour post-opératoire : que recommande la liste Top 5 SSMIG (hospitalière 2023) ?",
+      "options": ["Débuter une antibiothérapie à large spectre en raison des marqueurs", "Ne pas prescrire d'antibiotiques sur la seule base d'une élévation des marqueurs inflammatoires ; les interpréter dans le contexte clinique", "Doubler la dose d'antibiotique prophylactique", "Prescrire des hémocultures et une antibiothérapie empirique dans tous les cas", "Répéter la CRP toutes les 6 heures avant de décider"],
+      "correct": [1],
+      "explanation": "Recommandation n° 2 (2023) : CRP et procalcitonine signalent une inflammation mais manquent de spécificité pour une infection bactérienne (chirurgie, traumatisme, thrombose, néoplasie, maladies inflammatoires…) ; l'antibiothérapie repose sur la clinique et la microbiologie. Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2023 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "infectiologie"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "Pression artérielle à 165/95 mmHg chez un·e patient·e hospitalisé·e pour une fracture, douloureux·se et anxieux·se, sans signe d'atteinte d'organe : quelle attitude est conforme à la liste Top 5 SSMIG (hospitalière 2023) ?",
+      "options": ["Introduire immédiatement un antihypertenseur IV", "Ajouter un second antihypertenseur oral avant la sortie", "Ne pas instaurer ni intensifier de traitement antihypertenseur pendant l'hospitalisation aiguë en l'absence d'urgence hypertensive ; traiter douleur/anxiété et réévaluer en ambulatoire", "Prescrire un antihypertenseur « en réserve » à chaque valeur > 140/90", "Programmer une IRM cérébrale"],
+      "correct": [2],
+      "explanation": "Recommandation n° 3 (2023) : douleur, stress, anxiété, fièvre, privation de sommeil élèvent transitoirement la pression artérielle ; l'intensification en aigu favorise hypotension, chutes et insuffisance rénale sans améliorer le contrôle à long terme. Exception : urgence/poussée hypertensive avec atteinte d'organe. Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2023 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "hypertension"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "Un neuroleptique (quétiapine) a été introduit pendant l'hospitalisation pour un état confusionnel avec agitation, désormais résolu. Que recommande la liste Top 5 SSMIG (hospitalière 2023) au moment de la sortie ?",
+      "options": ["Poursuivre la quétiapine 3 mois par sécurité", "Ne pas prescrire à la sortie un neuroleptique initié contre l'insomnie ou l'agitation sans réévaluer son indication après la phase aiguë ; l'arrêter le plus souvent", "Remplacer par une benzodiazépine", "Doubler la dose pour la nuit", "Laisser le médecin traitant décider sans mention dans la lettre de sortie"],
+      "correct": [1],
+      "explanation": "Recommandation n° 4 (2023) : les neuroleptiques de 2e génération, prescrits hors AMM pour insomnie/agitation, exposent aux effets métaboliques, cognitifs, aux chutes et à une surmortalité chez les personnes âgées ; l'ordonnance de sortie doit être révisée et l'arrêt documenté. Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2023 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "geriatrie", "pharmacologie"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "Patient·e BPCO hospitalisé·e pour exacerbation, SpO₂ à 91 % à l'air ambiant, sans détresse : concernant l'oxygénothérapie, que recommande la liste Top 5 SSMIG (hospitalière 2023) ?",
+      "options": ["Administrer de l'oxygène pour maintenir une SpO₂ ≥ 94 % chez tout·e patient·e", "Ne pas administrer d'oxygène pour maintenir une saturation ≥ 94 % ; viser une cible conservatrice (p. ex. 88–92 % dans la BPCO, ≤ 96 % sinon), sauf intoxication au CO, algie vasculaire de la face ou crise drépanocytaire", "Oxygène à 15 L/min au masque à réserve pour tou·tes", "Oxygène uniquement si SpO₂ < 80 %", "L'oxygène n'a jamais d'effet indésirable"],
+      "correct": [1],
+      "explanation": "Recommandation n° 5 (2023) : les stratégies libérales d'oxygène sont associées à une surmortalité par rapport aux stratégies conservatrices (méta-analyse IOTA, essais en soins intensifs) ; l'hyperoxie est délétère (vasoconstriction, hypercapnie chez le BPCO). Réf. : smarter medicine / SSMIG, Top 5 hospitalier 2023 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "hospitalier", "pneumologie"], "difficulty": 2, "lang": "fr"
+    },
+    {
+      "statement": "Parmi les recommandations Top 5 SSMIG en médecine interne générale ambulatoire (2014 et 2021), lesquelles sont exactes ? (plusieurs réponses)",
+      "options": ["Pas d'imagerie dans la lombalgie non spécifique avant 6 semaines en l'absence de signaux d'alarme", "Pas de dosage du PSA sans discussion préalable des risques et bénéfices avec le patient", "Pas de dosage de routine de la 25-OH-vitamine D en l'absence de facteurs de risque de carence", "Pas de dépistage ni de nouveau traitement d'une dyslipidémie en prévention primaire après 75 ans", "Poursuivre les IPP au long cours à dose pleine sans réévaluation"],
+      "correct": [0, 1, 2, 3],
+      "explanation": "Liste ambulatoire 2014 : pas d'imagerie de la lombalgie non spécifique < 6 semaines, pas de PSA sans discussion, pas d'antibiotiques dans les IVAS sans signe de gravité, pas de radiographie thoracique préopératoire sans suspicion clinique, IPP à la plus faible dose efficace avec réévaluation régulière. Liste ambulatoire 2021 : pas de dépistage/traitement des dyslipidémies > 75 ans en prévention primaire, pas d'IRM du genou pour douleur antérieure sans limitation ni épanchement, pas de fer chez les non-anémiques asymptomatiques ni de fer IV sans essai oral, pas de vitamine D de routine, pas de check-up approfondi régulier chez les asymptomatiques. Réf. : smarter medicine / SSMIG, Listes Top 5 ambulatoires 2014 et 2021 — smartermedicine.ch.",
+      "tags": ["smartermedicine", "ambulatoire", "prevention"], "difficulty": 2, "lang": "fr"
+    }
+  ]
+}

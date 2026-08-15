@@ -1,0 +1,222 @@
+{
+  "name": "Nouveautés en médecine interne 2026 (#en2026)",
+  "status": "published",
+  "questions": [
+    {
+      "statement": "Anticoagulation 2023-2026 (« anticoagulation stewardship ») : quelles affirmations sont exactes ? (plusieurs réponses)",
+      "options": [
+        "COBRRA (2025) : dans la MTEV aiguë, l'apixaban entraîne moins d'hémorragies cliniquement significatives que le rivaroxaban, pour une efficacité comparable",
+        "API-CAT (2025) : après ≥ 6 mois d'anticoagulation d'une MTEV associée au cancer, l'apixaban 2,5 mg 2×/j est non inférieur à 5 mg 2×/j sur les récidives et réduit les hémorragies",
+        "ANNEXA-I (2024) : dans l'hémorragie intracrânienne sous inhibiteur du facteur Xa, l'andexanet améliore le contrôle hémostatique mais augmente les événements thrombotiques ; l'andexanet a ensuite été retiré du marché américain (2025)",
+        "Le rivaroxaban est l'AOD de choix dans la MTEV en raison d'un moindre risque hémorragique",
+        "Dans le cancer, la dose pleine d'AOD doit être maintenue à vie sans réévaluation"
+      ],
+      "correct": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "COBRRA (~2 700 patients) : moins d'hémorragies cliniquement significatives sous apixaban vs rivaroxaban, sans différence de récidive. API-CAT (Mahé I et al., NEJM 2025 ; ~1 700 patients) : récidive 2,1 % vs 2,8 % (non-infériorité), hémorragies 12,1 % vs 15,6 %. ANNEXA-I (NEJM 2024) : efficacité hémostatique 67 % vs 53 % mais 10,3 % vs 5,6 % d'événements thrombotiques ; le retrait commercial d'Andexxa aux États-Unis en 2025 renvoie au CCP 4 facteurs. Réf. : Aljabry M, Alotaibi G. Anticoagulation Stewardship in the Era of Practice-Changing Evidence. J Clin Med 2026.",
+      "tags": [
+        "en2026",
+        "hematologie",
+        "anticoagulation"
+      ],
+      "difficulty": 3,
+      "lang": "fr"
+    },
+    {
+      "statement": "Recommandations AHA/ACC 2025 sur l'hypertension artérielle : quelles affirmations sont exactes ? (plusieurs réponses)",
+      "options": [
+        "La cible tensionnelle est < 130/80 mmHg pour la plupart des adultes traités",
+        "Le risque cardiovasculaire est estimé par le score PREVENT, qui remplace les Pooled Cohort Equations",
+        "Le dépistage de l'hyperaldostéronisme primaire est élargi (HTA résistante, HTA avec hypokaliémie, SAOS, incidentalome surrénalien…)",
+        "La cible reste < 140/90 mmHg quel que soit le risque",
+        "Les mesures à domicile ne sont plus recommandées"
+      ],
+      "correct": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "La guideline 2025 (Jones DW et al.) fixe une cible < 130/80 mmHg (systolique < 120 encouragée si bien tolérée), introduit le score PREVENT (risque à 10 ans, incluant fonction rénale et facteurs métaboliques) pour décider du traitement médicamenteux dès 130–139/80–89 mmHg chez les sujets à risque, et élargit nettement le dépistage de l'hyperaldostéronisme primaire (rapport aldostérone/rénine). Réf. : Jones DW et al. 2025 AHA/ACC Guideline for High Blood Pressure ; Taler SJ. Hypertension. Ann Intern Med 2026 (In the Clinic).",
+      "tags": [
+        "en2026",
+        "cardiologie",
+        "hypertension"
+      ],
+      "difficulty": 2,
+      "lang": "fr"
+    },
+    {
+      "statement": "Insuffisance cardiaque à FEVG préservée (HFpEF) : selon le parcours décisionnel ACC 2026, quelles classes thérapeutiques constituent le socle du traitement pour réduire les hospitalisations ?",
+      "options": [
+        "Bêtabloquant + digoxine",
+        "Inhibiteur du SGLT2 et antagoniste non stéroïdien du récepteur minéralocorticoïde (finérénone)",
+        "IEC à forte dose seul",
+        "Ivabradine + nitrés",
+        "Antagoniste calcique non dihydropyridinique"
+      ],
+      "correct": [
+        1
+      ],
+      "explanation": "Le 2026 ACC Expert Consensus Decision Pathway (Kittleson MM et al.) fait des iSGLT2 (DELIVER, EMPEROR-Preserved) le traitement de fond de tout HFpEF, ajoute la finérénone (FINEARTS-HF) comme MRA privilégié, et intègre les agonistes GLP-1/GIP (sémaglutide STEP-HFpEF, tirzépatide SUMMIT) chez les patient·es en surpoids/obésité ; les diurétiques restent symptomatiques. Réf. : Kittleson MM et al. Management of HFpEF: 2026 ACC Expert Consensus Decision Pathway. JACC 2026.",
+      "tags": [
+        "en2026",
+        "cardiologie",
+        "insuffisance-cardiaque"
+      ],
+      "difficulty": 2,
+      "lang": "fr"
+    },
+    {
+      "statement": "Patient·e de 84 ans avec insuffisance cardiaque, fragilité et polymédication : quelle attitude est conforme au Scientific Statement AHA 2026 sur l'insuffisance cardiaque du sujet âgé ?",
+      "options": [
+        "Renoncer d'emblée aux traitements de fond (GDMT) au-delà de 80 ans",
+        "Poursuivre/instaurer les traitements de fond en adaptant les doses, en surveillant hypotension orthostatique, kaliémie et fonction rénale, et en révisant la polymédication",
+        "Prescrire systématiquement les doses cibles des essais quel que soit l'état fonctionnel",
+        "Éviter les iSGLT2 en raison de l'âge",
+        "Privilégier le repos au lit et éviter la réadaptation"
+      ],
+      "correct": [
+        1
+      ],
+      "explanation": "Le statement (Lewsey SC et al., AHA 2026) rappelle que le bénéfice des traitements de fond persiste chez les personnes âgées, mais impose une approche individualisée : titration prudente, surveillance des effets indésirables (hypotension, hyperkaliémie, insuffisance rénale, chutes), déprescription des médicaments inutiles, dépistage de la fragilité et des troubles cognitifs, réadaptation et objectifs de soins partagés. Réf. : Lewsey SC et al. Strategies for Optimizing Heart Failure Care in the Older Adult. AHA Scientific Statement, 2026.",
+      "tags": [
+        "en2026",
+        "geriatrie",
+        "insuffisance-cardiaque"
+      ],
+      "difficulty": 2,
+      "lang": "fr"
+    },
+    {
+      "statement": "Surviving Sepsis Campaign 2026 : quelles nouveautés figurent dans les recommandations ? (plusieurs réponses)",
+      "options": [
+        "Une terminologie stratifiée : sepsis certain / probable / possible / improbable, avec délais antibiotiques adaptés (1 h si choc ou sepsis probable ; jusqu'à 3 h après investigation rapide si sepsis possible)",
+        "Un « code sepsis » multidisciplinaire au lit du malade",
+        "Le qSOFA seul comme outil de dépistage privilégié",
+        "Débuter la noradrénaline par voie périphérique sans attendre une voie centrale, cible PAM 65 mmHg",
+        "Abandon des cristalloïdes balancés au profit du NaCl 0,9 %"
+      ],
+      "correct": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "SSC 2026 (Prescott HC et al., Crit Care Med / Intensive Care Med 2026) : dépistage par NEWS/NEWS2/MEWS ou SIRS (pas qSOFA seul), stratification sepsis certain/probable/possible/improbable pour moduler l'urgence de l'antibiothérapie, « code sepsis », remplissage ≥ 30 mL/kg de cristalloïdes balancés en 3 h, noradrénaline en première ligne possible en périphérique, PAM 65 (60–65 chez ≥ 65 ans), corticoïdes suggérés dans le choc, perfusion prolongée des bêta-lactamines, lactate sériel. Réf. : Prescott HC et al. Surviving Sepsis Campaign: International Guidelines 2026.",
+      "tags": [
+        "en2026",
+        "infectiologie",
+        "urgences",
+        "soins-intensifs"
+      ],
+      "difficulty": 3,
+      "lang": "fr"
+    },
+    {
+      "statement": "Maladie rénale chronique avec albuminurie chez un·e patient·e diabétique de type 2 : quels sont les « quatre piliers » de la néphroprotection médicamenteuse décrits en 2025-2026 ?",
+      "options": [
+        "IEC/ARA II, iSGLT2, agoniste du GLP-1, finérénone (MRA non stéroïdien)",
+        "Statine, aspirine, bêtabloquant, diurétique de l'anse",
+        "Metformine, sulfonylurée, insuline, glitazone",
+        "IEC + ARA II en association, iSGLT2, allopurinol",
+        "Régime hypoprotéiné, bicarbonate, fer IV, EPO"
+      ],
+      "correct": [
+        0
+      ],
+      "explanation": "Le concept de quadrithérapie de la MRC (analogue aux 4 piliers de l'HFrEF) associe blocage du SRAA (IEC/ARA II), iSGLT2 (DAPA-CKD, EMPA-KIDNEY), agoniste du GLP-1 (FLOW : sémaglutide −24 % d'événements rénaux majeurs) et finérénone (FIDELIO/FIGARO) ; l'association IEC + ARA II est à éviter. Réf. : He K et al. Trends in Nephrology: From « Supportive Care » to CKD Combination Therapy. NDT 2026 ; Song RM et al. Delaying Progression of CKD. JAMA 2025.",
+      "tags": [
+        "en2026",
+        "nephrologie",
+        "diabetologie"
+      ],
+      "difficulty": 2,
+      "lang": "fr"
+    },
+    {
+      "statement": "Standards of Care ADA 2026, chapitre obésité et gestion du poids chez le diabétique de type 2 : quelle affirmation est correcte ?",
+      "options": [
+        "Les agonistes du GLP-1 et le double agoniste GIP/GLP-1 (sémaglutide, tirzépatide) sont à privilégier parmi les traitements pharmacologiques de l'obésité, et le traitement est conçu comme un traitement au long cours",
+        "Le traitement doit être arrêté dès l'atteinte de l'objectif pondéral",
+        "L'orlistat est le premier choix",
+        "La chirurgie bariatrique n'a plus d'indication depuis l'arrivée des incrétines",
+        "Ces traitements sont contre-indiqués en cas d'insuffisance cardiaque"
+      ],
+      "correct": [
+        0
+      ],
+      "explanation": "L'ADA 2026 recommande, en complément des mesures de mode de vie, de privilégier les molécules à forte efficacité pondérale et à bénéfices cardio-rénaux démontrés (sémaglutide, tirzépatide), de poursuivre le traitement au long cours (la reprise pondérale est la règle à l'arrêt) et de conserver la place de la chirurgie métabolique. Réf. : American Diabetes Association. 8. Obesity and Weight Management for the Prevention and Treatment of Type 2 Diabetes: Standards of Care in Diabetes—2026. Diabetes Care 2026;49(Suppl 1).",
+      "tags": [
+        "en2026",
+        "diabetologie",
+        "endocrinologie"
+      ],
+      "difficulty": 1,
+      "lang": "fr"
+    },
+    {
+      "statement": "Après 6 à 24 mois d'anticoagulation pour une MTEV non provoquée à haut risque de récidive, que retenir de l'essai RENOVE (Lancet 2025) et de la guideline AHA/ACC/ACCP 2026 sur l'embolie pulmonaire ?",
+      "options": [
+        "La dose réduite (apixaban 2,5 mg 2×/j ou rivaroxaban 10 mg/j) n'a pas formellement démontré la non-infériorité (récidive 2,2 % vs 1,8 % à 5 ans) mais réduit nettement les hémorragies (9,9 % vs 15,2 %) ; la guideline 2026 soutient cette option en phase prolongée",
+        "La dose réduite double le risque de récidive et doit être proscrite",
+        "Il faut arrêter toute anticoagulation après 6 mois quel que soit le risque",
+        "Seule la warfarine est recommandée en phase prolongée",
+        "La guideline 2026 conserve les catégories « massive / submassive »"
+      ],
+      "correct": [
+        0
+      ],
+      "explanation": "RENOVE (Couturaud F et al., Lancet 2025;405:725-735 ; 2 768 patients) : récidive 2,2 % vs 1,8 % (non-infériorité non atteinte de justesse), hémorragies cliniquement significatives HR 0,61. La guideline 2026 (Creager MA et al.) recommande les AOD sur la warfarine, l'HBPM sur l'HNF, soutient la dose réduite en phase prolongée (RENOVE, API-CAT), remplace « massive/submassive » par une classification A–E et recommande les PERT (classe 1) pour les catégories C–E. Réf. : Creager MA et al. 2026 AHA/ACC/ACCP/ACEP/CHEST/SCAI/SHM/SIR/SVM/SVN Guideline for Acute Pulmonary Embolism. Circulation/JACC 2026.",
+      "tags": [
+        "en2026",
+        "pneumologie",
+        "anticoagulation"
+      ],
+      "difficulty": 3,
+      "lang": "fr"
+    },
+    {
+      "statement": "Infectiologie 2025 pour l'interniste (revue Ann Intern Med 2026) : quelles affirmations sont exactes ? (plusieurs réponses)",
+      "options": [
+        "Dans l'infection urinaire compliquée / pyélonéphrite qui évolue favorablement, 7 jours d'antibiothérapie suffisent (y compris avec bactériémie à Gram négatif, essai BALANCE), au lieu de 14",
+        "Dans la bactériémie compliquée à S. aureus, la dalbavancine en deux perfusions (J1 et J8) n'était pas différente du traitement IV standard prolongé (essai DOTS, JAMA 2025), évitant la voie centrale prolongée",
+        "Toute élévation de la CRP impose une antibiothérapie",
+        "Les corticoïdes adjuvants sont désormais proscrits dans la pneumonie communautaire sévère",
+        "La durée de 14 jours reste la règle pour toute pyélonéphrite chez l'homme"
+      ],
+      "correct": [
+        0,
+        1
+      ],
+      "explanation": "Revue annuelle (Albaloul H et al., Ann Intern Med 2026) : raccourcissement des durées (IDSA cUTI 2025 : 5–7 j de fluoroquinolone ou 7 j de non-fluoroquinolone ; BALANCE : 7 j non inférieurs à 14 j pour les bactériémies à Gram négatif), dalbavancine en option dans la bactériémie à S. aureus (DOTS : pas de différence sur le critère DOOR, moins de complications de cathéter), et corticoïdes adjuvants ciblés dans la PAC sévère avec inflammation marquée (CRP élevée) plutôt qu'en systématique. Réf. : Albaloul H et al. Infectious Diseases: What You May Have Missed in 2025. Ann Intern Med 2026 ; Turner NA et al. DOTS, JAMA 2025.",
+      "tags": [
+        "en2026",
+        "infectiologie"
+      ],
+      "difficulty": 3,
+      "lang": "fr"
+    },
+    {
+      "statement": "Cardiologie 2025 pour l'interniste (revue Ann Intern Med 2026) : après un infarctus du myocarde avec FEVG conservée (> 40 %) traité par revascularisation, que montre l'essai REBOOT-CNIC sur les bêtabloquants au long cours ?",
+      "options": [
+        "Réduction de 30 % de la mortalité",
+        "Aucun bénéfice sur le critère composite décès / réinfarctus / hospitalisation pour insuffisance cardiaque",
+        "Augmentation des réinfarctus sous bêtabloquant",
+        "Bénéfice uniquement chez les femmes",
+        "Bénéfice uniquement au-delà de 75 ans"
+      ],
+      "correct": [
+        1
+      ],
+      "explanation": "REBOOT-CNIC (Ibanez B et al., NEJM 2025 ; ~8 400 patients, FEVG > 40 %) : pas de différence du critère composite entre bêtabloquant et absence de bêtabloquant → remise en question de la prescription systématique post-IDM à FE préservée à l'ère de la reperfusion. La même revue souligne l'imagerie initiale (coroscanner) dans la coronaropathie suspectée et l'essai DECAF (JAMA 2025) : la consommation de café n'augmente pas — et réduirait même — la récidive de FA après cardioversion. Réf. : Atalla M et al. Cardiology: What You May Have Missed in 2025. Ann Intern Med 2026.",
+      "tags": [
+        "en2026",
+        "cardiologie"
+      ],
+      "difficulty": 2,
+      "lang": "fr"
+    }
+  ]
+}
