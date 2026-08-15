@@ -20,6 +20,7 @@
   let notes = '';
   let difficultyMode = 'any';
   let spaced = false;
+  let participation = 'mixed';   // paper | digital | mixed
   let thematic = false;
   let thematicTags = [];
   let sounds = true;
@@ -69,7 +70,7 @@
           questionCount: plan.questionCount, secondsPerQuestion,
           participants, gridSize: effectiveGrid, marking, afterBingoDefault,
           excludeRecent, reservePct: 10, notes: notes.trim() || null, sounds, animations, difficultyMode,
-          spaced, thematic: thematic && thematicTags.length === effectiveGrid, thematicTags: thematic ? thematicTags : []
+          spaced, thematic: thematic && thematicTags.length === effectiveGrid, thematicTags: thematic ? thematicTags : [], participation
         }
       });
       location.hash = '#/session/' + s.id;
@@ -161,6 +162,16 @@
       {#if plan?.byDifficulty}
         <div class="muted" style="margin-top:6px">{$t('diff.1')} : {plan.byDifficulty[1]} · {$t('diff.2')} : {plan.byDifficulty[2]} · {$t('diff.3')} : {plan.byDifficulty[3]} — {$t('snew.caseshint')}</div>
       {/if}
+    </div>
+
+    <div>
+      <label>{$t('snew.participation')}</label>
+      <div class="row" style="gap:8px">
+        <button class="btn small" class:secondary={participation !== 'mixed'} on:click={() => (participation = 'mixed')}>🖨️📱 {$t('part.mixed')}</button>
+        <button class="btn small" class:secondary={participation !== 'paper'} on:click={() => (participation = 'paper')}>🖨️ {$t('part.paper')}</button>
+        <button class="btn small" class:secondary={participation !== 'digital'} on:click={() => (participation = 'digital')}>📱 {$t('part.digital')}</button>
+      </div>
+      <div class="muted" style="margin-top:6px">{$t('part.' + participation + '.desc')}</div>
     </div>
 
     <div>

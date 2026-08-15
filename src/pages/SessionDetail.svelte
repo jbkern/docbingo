@@ -98,6 +98,7 @@
       <div class="kv"><span>{$t('nav.questions')}</span><b>{s.questionOrder.length}</b></div>
       <div class="kv"><span>{$t('sdetail.timeperq')}</span><b>{s.params.secondsPerQuestion} s</b></div>
       <div class="kv"><span>{$t('sdetail.grid')}</span><b>{s.params.gridSize}×{s.params.gridSize}</b></div>
+      <div class="kv"><span>{$t('snew.participation')}</span><b>{$t('part.' + (s.params.participation || 'mixed'))}</b></div>
       <div class="kv"><span>{$t('sdetail.marking')}</span><b>{s.params.marking === 'correct' ? $t('mark.correct') : $t('mark.luck')}</b></div>
       <div class="kv"><span>{$t('sdetail.selection')}</span><b>{s.params.tags?.length ? s.params.tags.map(x => '#' + x).join(' ') : $t('sessions.random')}</b></div>
       {#if s.state?.winners?.length}
@@ -123,7 +124,8 @@
       <p class="muted" style="margin-bottom:12px; line-height:1.5">
         {$t('sdetail.gridsinfo', { n: s.grids.length, p: s.params.participants })}
       </p>
-      <button class="btn" on:click={downloadPdf} disabled={pdfBusy}>
+      {#if s.params.participation === 'digital'}<div class="alert ok" style="margin-bottom:10px">📱 {$t('part.digital.hint')}</div>{/if}
+      <button class="btn" class:secondary={s.params.participation === 'digital'} on:click={downloadPdf} disabled={pdfBusy}>
         {pdfBusy ? $t('sdetail.generating') : '⬇ ' + $t('sdetail.downloadpdf')}
       </button>
       <div class="muted" style="margin-top:10px">{Math.ceil(s.grids.length / 2)} {$t('sdetail.sheets')}</div>

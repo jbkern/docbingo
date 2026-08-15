@@ -2,6 +2,13 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'snew.participation': 'Participation', 'part.mixed': 'Papier + smartphone', 'part.paper': 'Papier uniquement', 'part.digital': 'Smartphone uniquement',
+  'part.mixed.desc': 'Grilles imprimées ET code de session pour smartphone : chacun choisit. Les bingos papier se vérifient par code de grille, les bingos smartphone sont automatiques.',
+  'part.paper.desc': 'Pas de code de session ni de participation numérique : grilles imprimées, vérification des bingos par code de grille.',
+  'part.digital.desc': 'Pas d\'impression : chaque participant reçoit une grille numérique sur son smartphone, marquage, bingos, scores et statistiques automatiques.',
+  'part.digital.hint': 'Session 100 % smartphone : l\'impression des grilles est facultative (utile en secours si un participant n\'a pas de téléphone).',
+  'join.err.paper_only': 'Cette session se joue sur papier uniquement.',
+
   'nav.home': 'Accueil', 'home.hello': 'Bonjour', 'home.evening': 'Bonsoir', 'home.tagline': 'Tout est prêt pour votre prochain bingo.',
   'home.running': 'Session en cours', 'home.pending': 'question(s) proposée(s) à valider',
   'home.published': 'questions publiées', 'home.unused': 'jamais posées', 'home.tags': 'mots-clés', 'home.ready': 'sessions prêtes', 'home.done': 'terminées', 'home.mine': 'mes questions',
@@ -181,6 +188,13 @@ const fr = {
 
 const en = {
 
+  'snew.participation': 'Participation', 'part.mixed': 'Paper + phone', 'part.paper': 'Paper only', 'part.digital': 'Phone only',
+  'part.mixed.desc': 'Printed cards AND a session code for phones: everyone chooses. Paper bingos are checked by card code, phone bingos are automatic.',
+  'part.paper.desc': 'No session code, no digital participation: printed cards, bingo check by card code.',
+  'part.digital.desc': 'No printing: each participant gets a digital card on their phone; marking, bingos, scores and statistics are automatic.',
+  'part.digital.hint': '100% phone session: printing cards is optional (handy as a backup for someone without a phone).',
+  'join.err.paper_only': 'This session is played on paper only.',
+
   'nav.home': 'Home', 'home.hello': 'Hello', 'home.evening': 'Good evening', 'home.tagline': 'Everything is ready for your next bingo.',
   'home.running': 'Session in progress', 'home.pending': 'proposed question(s) to review',
   'home.published': 'published questions', 'home.unused': 'never asked', 'home.tags': 'keywords', 'home.ready': 'sessions ready', 'home.done': 'finished', 'home.mine': 'my questions',
@@ -352,6 +366,13 @@ const en = {
 };
 
 const de = {
+
+  'snew.participation': 'Teilnahme', 'part.mixed': 'Papier + Smartphone', 'part.paper': 'Nur Papier', 'part.digital': 'Nur Smartphone',
+  'part.mixed.desc': 'Gedruckte Karten UND Sitzungscode für Smartphones: jede/r wählt. Papier-Bingos werden per Kartencode geprüft, Smartphone-Bingos automatisch.',
+  'part.paper.desc': 'Kein Sitzungscode, keine digitale Teilnahme: gedruckte Karten, Bingo-Prüfung per Kartencode.',
+  'part.digital.desc': 'Kein Druck: jede/r erhält eine digitale Karte auf dem Smartphone; Markierung, Bingos, Punkte und Statistiken automatisch.',
+  'part.digital.hint': '100 % Smartphone-Sitzung: Kartendruck optional (als Reserve für Personen ohne Telefon).',
+  'join.err.paper_only': 'Diese Sitzung wird nur auf Papier gespielt.',
 
   'nav.home': 'Start', 'home.hello': 'Hallo', 'home.evening': 'Guten Abend', 'home.tagline': 'Alles bereit für Ihr nächstes Bingo.',
   'home.running': 'Laufende Sitzung', 'home.pending': 'vorgeschlagene Frage(n) zu prüfen',

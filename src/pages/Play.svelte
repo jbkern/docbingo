@@ -42,6 +42,7 @@
   let questionStartedAt = null;
   let consoleAbort = null;
   $: hasParticipants = participants.length > 0;
+  $: digitalOn = (s?.params?.participation || 'mixed') !== 'paper';
   $: ambiance = s?.params?.ambiance || settings.ambiance || 'classic';
   $: pendingSlides = s ? (s.slides || []) : [];
 
@@ -76,6 +77,7 @@
       listenRemote();
     } catch {}
     try {
+      if ((s.params.participation || 'mixed') === 'paper') throw new Error('paper');
       joinCode = (await api.post(`/api/sessions/${sessionId}/join-code`, {})).code;
       participants = await api.get(`/api/sessions/${sessionId}/participants`);
       autoBingos = participants.filter(p => p.bingoAt).map(p => ({ id: p.id, name: p.name, gridCode: p.gridCode, atQuestion: p.bingoAt }));
@@ -517,6 +519,7 @@
           </div>
         </div>
 
+        {#if digitalOn}
         <div class="card">
           <div class="panel-title">👥 {$t('pres.participants')} <span class="tag" style="margin-left:auto">{participants.length}</span></div>
           <div class="muted" style="font-size:13px; line-height:1.6">
@@ -531,6 +534,7 @@
             </div>
           {/if}
         </div>
+        {/if}
 
         <div class="card">
           <div class="panel-title">📱 {$t('pres.remote')} <span class="tag" style="margin-left:auto; background:{remoteOnline ? 'var(--ok)' : 'var(--soft)'}; color:{remoteOnline ? 'var(--ok-ink)' : 'var(--soft-ink)'}">{remoteOnline ? $t('pres.remoteon') : $t('pres.remoteoff')}</span></div>

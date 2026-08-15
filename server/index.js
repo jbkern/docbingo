@@ -587,6 +587,7 @@ app.post('/api/join', h(async (req, res) => {
   const row = await get('SELECT * FROM sessions WHERE join_code = ?', [code]);
   if (!row) return res.status(404).json({ error: 'session_not_found' });
   if (row.status === 'done') return res.status(400).json({ error: 'session_done' });
+  if (j(row.params, {}).participation === 'paper') return res.status(400).json({ error: 'paper_only' });
   const sid = row.id;
   // grille : papier déclarée, sinon attribuer une grille numérique libre (grille non attribuée à un autre participant)
   let gridId = null, gridCode = null;
