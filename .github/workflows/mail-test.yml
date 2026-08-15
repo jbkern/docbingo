@@ -21,7 +21,8 @@ jobs:
           URL: https://docbingo.ch
           EMAIL: ${{ inputs.email }}
         run: |
-          ST=$(curl -s -m 30 "$URL/api/auth/mail-status")
+          set +e
+          for i in $(seq 1 12); do ST=$(curl -s -m 30 "$URL/api/auth/mail-status") && [ -n "$ST" ] && break; echo "[$i] en attente du service…"; sleep 20; done
           R=$(curl -s -m 60 -w " [HTTP %{http_code}]" -X POST -H "Content-Type: application/json" -d "{\"email\":\"$EMAIL\"}" "$URL/api/auth/forgot")
           BODY=$(printf '**Test email** (%s)\n\n- mail-status : `%s`\n- forgot(%s) : `%s`\n\n_Généré le %s_' "$URL" "$ST" "$EMAIL" "$R" "$(date -u +%FT%TZ)")
           echo "$BODY"
