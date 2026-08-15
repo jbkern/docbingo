@@ -1,0 +1,42 @@
+name: Domaines personnalisés (Render)
+
+on:
+  workflow_dispatch:
+    inputs:
+      domains:
+        description: "Domaines à raccorder (séparés par des virgules)"
+        default: "docbingo.ch,www.docbingo.ch"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  domains:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ajouter les domaines au service et rapporter l'état
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RK: ${{ secrets.RENDER_API_KEY }}
+          DOMAINS: ${{ inputs.domains }}
+        run: |
+          set +e
+          SID=$(curl -sf -H "Authorization: Bearer $RK" "https://api.render.com/v1/services?name=docbingo&limit=5" | jq -r '.[0].service.id')
+          echo "Service $SID"
+          IFS=',' read -ra DS <<< "$DOMAINS"
+          for d in "${DS[@]}"; do
+            d=$(echo "$d" | xargs)
+            R=$(curl -s -w " HTTP%{http_code}" -X POST -H "Authorization: Bearer $RK" -H "Content-Type: application/json" -d "{\"name\":\"$d\"}" "https://api.render.com/v1/services/$SID/custom-domains")
+            echo "add $d → $(echo "$R" | tail -c 400)"
+          done
+          sleep 5
+          LIST=$(curl -s -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/custom-domains?limit=20" | jq -c '[.[] | .customDomain | {name, domainType, verificationStatus, redirectForName}]')
+          echo "$LIST" | jq .
+          # relancer la vérification
+          for id in $(curl -s -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/custom-domains?limit=20" | jq -r '.[].customDomain.id'); do
+            curl -s -o /dev/null -X POST -H "Authorization: Bearer $RK" "https://api.render.com/v1/services/$SID/custom-domains/$id/verify"
+          done
+          BODY=$(printf '**Domaines Render** (`%s`)\n\n```json\n%s\n```\n\nDNS attendus chez Infomaniak :\n- `docbingo.ch` (racine) → enregistrement **A** → `216.24.57.1`\n- `www` → enregistrement **CNAME** → `docbingo.onrender.com.`\n\n_Généré le %s_' "$SID" "$LIST" "$(date -u +%%FT%%TZ)")
+          N=$(gh issue list --state open --search "Domaines in:title" --json number --jq '.[0].number' -R ${{ github.repository }})
+          if [ -z "$N" ]; then gh issue create -R ${{ github.repository }} --title "Domaines personnalisés" --body "$BODY"; else gh issue comment -R ${{ github.repository }} "$N" --body "$BODY"; fi
