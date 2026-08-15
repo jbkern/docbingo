@@ -1,0 +1,41 @@
+name: Relais email (envoi via la boîte Infomaniak)
+
+# Déclenché par le serveur DocBingo (repository_dispatch « send-mail ») car l'hébergeur gratuit bloque les ports SMTP.
+# Le contenu arrive chiffré (AES-256-GCM, clé = SHA-256 de DOCBINGO_PASSWORD) et n'est jamais affiché dans les journaux.
+
+on:
+  repository_dispatch:
+    types: [send-mail]
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déchiffrer et envoyer
+        env:
+          DATA: ${{ github.event.client_payload.data }}
+          PW: ${{ secrets.DOCBINGO_PASSWORD }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: |
+          npm install --silent --no-audit --no-fund nodemailer@6 >/dev/null
+          cat > /tmp/send.mjs <<'EOF'
+          import crypto from 'node:crypto';
+          import { createRequire } from 'node:module';
+          const nodemailer = createRequire(process.cwd() + '/')('nodemailer');
+          const key = crypto.createHash('sha256').update(process.env.PW).digest();
+          const buf = Buffer.from(process.env.DATA, 'base64');
+          const d = crypto.createDecipheriv('aes-256-gcm', key, buf.subarray(0, 12)); d.setAuthTag(buf.subarray(12, 28));
+          const m = JSON.parse(Buffer.concat([d.update(buf.subarray(28)), d.final()]).toString('utf8'));
+          const port = Number(process.env.SMTP_PORT || 465);
+          const tr = nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+          const r = await tr.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to: m.to, subject: m.subject, text: m.text, html: m.html });
+          console.log('envoyé →', m.to.replace(/^(.).*@/, '$1***@'), r.response);
+          EOF
+          node /tmp/send.mjs

@@ -73,8 +73,30 @@ const adminOnly = (req, res, next) => (req.user?.role === 'admin' ? next() : res
 
 /* ---------- Mot de passe oublié (email) ----------
    Envoi via SMTP si configuré (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM, APP_URL) ; sinon la fonction indique de contacter l'administrateur. */
-const mailReady = () => !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+/* Deux modes d'envoi :
+   - relais GitHub Actions (GH_MAIL_TOKEN) : l'hébergeur gratuit bloque les ports SMTP sortants, on déclenche donc le
+     workflow send-mail.yml qui envoie via la boîte Infomaniak ; le contenu est chiffré (AES-256-GCM, clé = SHA-256 du
+     secret DOCBINGO_PASSWORD partagé) pour ne jamais transiter en clair ;
+   - SMTP direct (SMTP_HOST/USER/PASS) sinon. */
+const relayReady = () => !!(process.env.GH_MAIL_TOKEN && process.env.DOCBINGO_PASSWORD);
+const mailReady = () => relayReady() || !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+function encryptForRelay(obj) {
+  const key = crypto.createHash('sha256').update(String(process.env.DOCBINGO_PASSWORD)).digest();
+  const iv = crypto.randomBytes(12); const c = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ct = Buffer.concat([c.update(JSON.stringify(obj), 'utf8'), c.final()]);
+  return Buffer.concat([iv, c.getAuthTag(), ct]).toString('base64');
+}
 async function sendMail(to, subject, text, html) {
+  if (relayReady()) {
+    const repo = process.env.GH_MAIL_REPO || 'jbkern/docbingo';
+    const r = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.GH_MAIL_TOKEN}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'docbingo-mail' },
+      body: JSON.stringify({ event_type: 'send-mail', client_payload: { data: encryptForRelay({ to, subject, text, html }) } })
+    });
+    if (r.status !== 204) throw new Error('relais GitHub : HTTP ' + r.status);
+    return;
+  }
   const nodemailer = (await import('nodemailer')).default;
   // Essaie le port configuré (465 = TLS implicite) puis 587 (STARTTLS) si l'hébergeur bloque le premier ; délais courts.
   const ports = [...new Set([Number(process.env.SMTP_PORT || 465), 587, 465])];
