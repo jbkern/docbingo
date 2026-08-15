@@ -2,6 +2,12 @@ import { writable, derived } from 'svelte/store';
 
 const fr = {
 
+  'nav.home': 'Accueil', 'home.hello': 'Bonjour', 'home.evening': 'Bonsoir', 'home.tagline': 'Tout est prêt pour votre prochain bingo.',
+  'home.running': 'Session en cours', 'home.pending': 'question(s) proposée(s) à valider',
+  'home.published': 'questions publiées', 'home.unused': 'jamais posées', 'home.tags': 'mots-clés', 'home.ready': 'sessions prêtes', 'home.done': 'terminées', 'home.mine': 'mes questions',
+  'home.recent': 'Dernières sessions', 'home.all': 'Toutes', 'home.nosession': 'Aucune session pour l\'instant. Créez-en une à partir de la banque de questions.',
+  'home.steps': 'En 4 étapes', 'home.step1': 'Alimenter la banque de questions (saisie, import, IA)', 'home.step2': 'Créer une session et imprimer les grilles', 'home.step3': 'Le jour J : ouvrir l\'écran public, partager le code aux smartphones', 'home.step4': 'Animer, vérifier les bingos, distribuer la synthèse',
+
   'login.password': 'Mot de passe', 'login.error': 'Identifiants incorrects', 'login.enter': 'Se connecter', 'login.logout': 'Se déconnecter',
   'login.hint': 'Utilisez l\'email et le mot de passe fournis par l\'administrateur. Ancienne connexion par mot de passe unique : laissez l\'email vide.',
   'login.mustchange': 'Vous utilisez un mot de passe temporaire : changez-le dans les réglages.',
@@ -175,6 +181,12 @@ const fr = {
 
 const en = {
 
+  'nav.home': 'Home', 'home.hello': 'Hello', 'home.evening': 'Good evening', 'home.tagline': 'Everything is ready for your next bingo.',
+  'home.running': 'Session in progress', 'home.pending': 'proposed question(s) to review',
+  'home.published': 'published questions', 'home.unused': 'never asked', 'home.tags': 'keywords', 'home.ready': 'sessions ready', 'home.done': 'finished', 'home.mine': 'my questions',
+  'home.recent': 'Recent sessions', 'home.all': 'All', 'home.nosession': 'No session yet. Create one from the question bank.',
+  'home.steps': 'In 4 steps', 'home.step1': 'Fill the question bank (typing, import, AI)', 'home.step2': 'Create a session and print the cards', 'home.step3': 'On the day: open the public display, share the code to phones', 'home.step4': 'Run, verify bingos, hand out the summary',
+
   'login.password': 'Password', 'login.error': 'Wrong credentials', 'login.enter': 'Sign in', 'login.logout': 'Sign out',
   'login.hint': 'Use the email and password given by the administrator. Legacy single-password login: leave the email empty.',
   'login.mustchange': 'You are using a temporary password: change it in Settings.',
@@ -340,6 +352,12 @@ const en = {
 };
 
 const de = {
+
+  'nav.home': 'Start', 'home.hello': 'Hallo', 'home.evening': 'Guten Abend', 'home.tagline': 'Alles bereit für Ihr nächstes Bingo.',
+  'home.running': 'Laufende Sitzung', 'home.pending': 'vorgeschlagene Frage(n) zu prüfen',
+  'home.published': 'veröffentlichte Fragen', 'home.unused': 'nie gestellt', 'home.tags': 'Stichwörter', 'home.ready': 'bereite Sitzungen', 'home.done': 'beendet', 'home.mine': 'meine Fragen',
+  'home.recent': 'Letzte Sitzungen', 'home.all': 'Alle', 'home.nosession': 'Noch keine Sitzung. Erstellen Sie eine aus der Fragenbank.',
+  'home.steps': 'In 4 Schritten', 'home.step1': 'Fragenbank füllen (Eingabe, Import, KI)', 'home.step2': 'Sitzung erstellen und Karten drucken', 'home.step3': 'Am Tag: Publikumsbildschirm öffnen, Code an Smartphones geben', 'home.step4': 'Moderieren, Bingos prüfen, Zusammenfassung verteilen',
 
   'login.password': 'Passwort', 'login.error': 'Falsche Anmeldedaten', 'login.enter': 'Anmelden', 'login.logout': 'Abmelden',
   'login.hint': 'Verwenden Sie E-Mail und Passwort vom Administrator. Alte Anmeldung mit Einzelpasswort: E-Mail leer lassen.',

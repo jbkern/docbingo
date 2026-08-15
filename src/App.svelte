@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { t, lang } from './lib/i18n.js';
   import { api, setToken } from './lib/api.js';
+  import Home from './pages/Home.svelte';
   import Questions from './pages/Questions.svelte';
   import QuestionForm from './pages/QuestionForm.svelte';
   import Sessions from './pages/Sessions.svelte';
@@ -21,9 +22,9 @@
   let runningSession = null;
 
   function parseHash() {
-    const h = (location.hash || '#/questions').slice(2);
+    const h = (location.hash || '#/home').slice(2);
     const [page, param] = h.split('/');
-    route = { page: page || 'questions', param: param || null };
+    route = { page: page || 'home', param: param || null };
   }
 
   async function loadSettings() {
@@ -112,7 +113,7 @@
 {:else}
   <div class="shell">
     <header>
-      <a class="brand" href="#/questions">
+      <a class="brand" href="#/home">
         <svg width="34" height="34" viewBox="0 0 100 100">
           <rect x="5" y="5" width="90" height="90" rx="16" fill="var(--panel)" stroke="var(--accent)" stroke-width="6"/>
           <circle cx="50" cy="50" r="17" fill="var(--accent-2)"/>
@@ -122,6 +123,7 @@
         <span><b>DocBingo</b><small>{$t('app.tagline')}</small></span>
       </a>
       <nav>
+        <a href="#/home" class:active={route.page === 'home'}>{$t('nav.home')}</a>
         <a href="#/questions" class:active={['questions', 'question', 'import'].includes(route.page)}>{$t('nav.questions')}</a>
         {#if user?.role === 'admin' && pending}<a href="#/review" class:active={route.page === 'review'}>{$t('nav.review')} <span class="badge">{pending}</span></a>{/if}
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
@@ -134,14 +136,15 @@
       <div class="alert warn" style="margin-bottom:14px">🔑 {$t('login.mustchange')} <a href="#/settings">{$t('nav.settings')} →</a></div>
     {/if}
 
-    {#if runningSession && route.page !== 'play'}
+    {#if runningSession && route.page !== 'play' && route.page !== 'home'}
       <a class="resume" href={'#/play/' + runningSession.id}>
         ▶ {$t('app.resume')} : <b>{runningSession.name}</b> ({$t('app.question')} {runningSession.currentIndex + 1})
       </a>
     {/if}
 
     <main>
-      {#if route.page === 'questions'}<Questions />
+      {#if route.page === 'home'}<Home {user} />
+      {:else if route.page === 'questions'}<Questions />
       {:else if route.page === 'question'}<QuestionForm id={route.param} />
       {:else if route.page === 'import'}<Import />
       {:else if route.page === 'sessions'}<Sessions />
@@ -150,7 +153,7 @@
       {:else if route.page === 'stats'}<Stats />
       {:else if route.page === 'review'}<Review on:done={loadMe} />
       {:else if route.page === 'settings'}<Settings {settings} {user} />
-      {:else}<Questions />{/if}
+      {:else}<Home {user} />{/if}
     </main>
   </div>
 {/if}
