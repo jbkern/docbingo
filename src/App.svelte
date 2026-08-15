@@ -107,6 +107,8 @@
   $: isJoin = route.page === 'join';
   $: isAbout = route.page === 'about';
   $: isCharter = route.page === 'charter';
+  let menuOpen = false;
+  $: route, (menuOpen = false);
   $: needCharter = !!(user?.id && !user.charterAccepted);
   let charterOk = false; let charterBusy = false;
   async function acceptCharter() { charterBusy = true; try { await api.post('/api/me/charter', {}); user = { ...user, charterAccepted: true }; } catch {} charterBusy = false; }
@@ -176,14 +178,15 @@
         </svg>
         <span><b>DocBingo</b><small>{$t('app.tagline')}</small></span>
       </a>
-      <nav>
+      <button class="burger" on:click={() => (menuOpen = !menuOpen)} aria-label="Menu" aria-expanded={menuOpen}>{menuOpen ? '✕' : '☰'}</button>
+      <nav class:open={menuOpen}>
         <a href="#/home" class:active={route.page === 'home'}>{$t('nav.home')}</a>
         <a href="#/questions" class:active={['questions', 'question', 'import'].includes(route.page)}>{$t('nav.questions')}</a>
         {#if user?.role === 'admin' && pending}<a href="#/review" class:active={route.page === 'review'}>{$t('nav.review')} <span class="badge">{pending}</span></a>{/if}
         <a href="#/sessions" class:active={['sessions','session','session-new'].includes(route.page)}>{$t('nav.sessions')}</a>
         <a href="#/stats" class:active={route.page === 'stats'}>{$t('nav.stats')}</a>
         <a href="#/settings" class:active={route.page === 'settings'}>{$t('nav.settings')}</a>
-        {#if user?.id}<button class="userbtn" on:click={logout} title={(user.role === 'admin' ? $t('role.admin') : $t('role.author')) + ' — ' + $t('login.logout')}><span class="uname">{user.name}</span> ⏻</button>{/if}
+        {#if user?.id}<button class="userbtn" on:click={logout} title={(user.role === 'admin' ? $t('role.admin') : $t('role.author')) + ' — ' + $t('login.logout')}><span class="uname">{user.name}</span> ⏻ <span class="logout-label">{$t('login.logout')}</span></button>{/if}
       </nav>
     </header>
     {#if needCharter}
@@ -254,15 +257,19 @@
   .badge { background: var(--accent-2); color: var(--accent-2-ink); border-radius: 999px; padding: 1px 7px; font-size: 11px; margin-left: 3px; }
   .userbtn { border: 1px solid var(--border); background: var(--panel); color: var(--ink-dim); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px; }
   .uname { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+  .burger { display: none; }
+  .logout-label { display: none; }
   @media (max-width: 760px) {
     .shell { padding: 0 12px 40px; }
-    header { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 0; margin-bottom: 14px; }
-    nav { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-    nav::-webkit-scrollbar { display: none; }
-    nav a { padding: 7px 11px; font-size: 13.5px; white-space: nowrap; flex-shrink: 0; }
-    .userbtn { flex-shrink: 0; margin-left: auto; padding: 5px 10px; }
-    .uname { max-width: 90px; }
+    header { position: relative; flex-wrap: nowrap; align-items: center; gap: 8px; padding: 10px 0; margin-bottom: 14px; }
     .brand b { font-size: 17px; }
+    .burger { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; flex: none; }
+    nav { display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 800; flex-direction: column; gap: 2px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+    nav.open { display: flex; }
+    nav a { padding: 12px 14px; font-size: 15px; border-radius: 8px; }
+    .userbtn { margin: 6px 0 0; padding: 11px 14px; border-radius: 8px; text-align: left; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+    .uname { max-width: 55%; }
+    .logout-label { display: inline; margin-left: auto; opacity: .8; }
   }
   .modal-bg { position: fixed; inset: 0; background: rgba(10,20,35,.55); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 14px; }
   .modal { background: var(--bg); border-radius: 14px; max-width: 760px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
