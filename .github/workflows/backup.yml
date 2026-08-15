@@ -12,7 +12,7 @@ jobs:
       - name: Télécharger la sauvegarde complète et la chiffrer
         env:
           PW: ${{ secrets.DOCBINGO_PASSWORD }}
-          URL: https://docbingo.onrender.com
+          URL: https://docbingo.ch
         run: |
           set -e
           for i in 1 2 3 4 5 6; do curl -sf "$URL/api/ping" >/dev/null && break; echo "réveil du serveur ($i)…"; sleep 20; done

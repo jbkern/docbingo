@@ -2,6 +2,8 @@
 
 Plateforme de bingo QCM médical (serious game) — création de questions, sessions de bingo paramétrables, grilles PDF à imprimer, animation avec mode présentateur double écran. Interface FR / EN / DE, trois thèmes visuels.
 
+**En ligne : https://docbingo.ch** (hébergement Render, base Turso · domaine Infomaniak).
+
 ## Démarrer en local
 
 ```bash
