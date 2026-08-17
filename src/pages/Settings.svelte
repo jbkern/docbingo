@@ -66,7 +66,8 @@
   const themes = [
     { id: 'suisse', colors: ['#f7f7f5', '#16324f', '#e63946'] },
     { id: 'neon', colors: ['#0b1c2c', '#14b8a6', '#fbbf24'] },
-    { id: 'pop', colors: ['#fff7f2', '#7c3aed', '#ff6b5e'] }
+    { id: 'pop', colors: ['#fff7f2', '#7c3aed', '#ff6b5e'] },
+    { id: 'noel', colors: ['#f6efe6', '#1f5f45', '#b3202b'], icon: '🎄' }
   ];
   const langs = [
     { id: 'fr', name: 'Français' },
@@ -162,7 +163,7 @@
           <span class="dots">
             {#each th.colors as c}<span class="dot" style="background:{c}"></span>{/each}
           </span>
-          <span style="text-align:left"><b>{$t('theme.' + th.id)}</b><br><small class="muted">{$t('theme.' + th.id + '.desc')}</small></span>
+          <span style="text-align:left"><b>{th.icon ? th.icon + ' ' : ''}{$t('theme.' + th.id)}</b><br><small class="muted">{$t('theme.' + th.id + '.desc')}</small></span>
           {#if local.theme === th.id}<span style="margin-left:auto; font-weight:800; color:var(--ok)">✓</span>{/if}
         </button>
       {/each}

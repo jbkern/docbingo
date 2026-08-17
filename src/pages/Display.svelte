@@ -49,6 +49,9 @@
   }
 </script>
 
+{#if effectsOn && settings?.theme === 'noel'}
+  <div class="snow" aria-hidden="true">{#each Array(28) as _, i}<i style="left:{(i * 37) % 100}%; animation-duration:{9 + (i % 7) * 1.7}s; animation-delay:{-(i * 1.3) % 12}s; font-size:{10 + (i % 4) * 4}px">❄</i>{/each}</div>
+{/if}
 {#if !s || !st || !connected}
   <div class="waitbg">
     <div style="text-align:center">

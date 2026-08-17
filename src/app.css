@@ -36,6 +36,26 @@
   --proj-accent: #ff6b5e; --proj-chip: #ede4ff; --proj-chip-ink: #7c3aed; --proj-ball-radius: 50%;
 }
 
+/* Thème saisonnier « Chalet de Noël » (4e thème) : crème/bois, vert sapin, rouge suisse, or ; écran public vert sapin nuit */
+:root[data-theme="noel"] {
+  --bg: #f6efe6; --panel: #fffaf3; --card: #fffdf9;
+  --ink: #2b1d16; --ink-dim: #8a6f5e; --border: #e6d6c4;
+  --accent: #1f5f45; --accent-ink: #ffffff;
+  --accent-2: #b3202b; --accent-2-ink: #ffffff;
+  --soft: #e8efe6; --soft-ink: #1f5f45;
+  --ok: #3f8f5f; --ok-ink: #ffffff; --warn: #c9a227; --danger: #b3202b;
+  --radius: 12px; --shadow: 0 2px 6px rgba(80,50,20,.10);
+  --title-transform: uppercase; --title-spacing: .02em;
+  --proj-bg: #1b3d2f; --proj-panel: #22503d; --proj-ink: #fbf4e6; --proj-dim: #a9c4b3;
+  --proj-accent: #c9a227; --proj-accent-ink: #2b1d16; --proj-chip: #2b5c47; --proj-chip-ink: #e7d8b0; --proj-ball-radius: 50%;
+}
+:root[data-theme="noel"] .btn { box-shadow: inset 0 -2px 0 rgba(0,0,0,.18); }
+:root[data-theme="noel"] header { border-bottom: 3px solid transparent; border-image: repeating-linear-gradient(90deg, #b3202b 0 10px, #fffaf3 10px 14px, #1f5f45 14px 24px, #fffaf3 24px 28px) 1; }
+/* flocons discrets sur l'écran public (respecte le réglage animations via .fx-on) */
+:root[data-theme="noel"] .snow { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+:root[data-theme="noel"] .snow i { position: absolute; top: -4vh; color: rgba(255,255,255,.55); font-style: normal; font-size: 14px; animation: snowfall linear infinite; }
+@keyframes snowfall { 0% { transform: translateY(-5vh) translateX(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(105vh) translateX(6vw); opacity: .2; } }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;

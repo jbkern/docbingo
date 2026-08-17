@@ -176,6 +176,7 @@ const fr = {
   'theme.suisse.desc': 'Blanc cassé, ardoise, rouge médical — par défaut',
   'theme.neon.desc': 'Bleu nuit, turquoise, ambre — high-tech',
   'theme.pop.desc': 'Crème, violet, corail — jeu de plateau',
+  'theme.noel': 'Chalet de Noël', 'theme.noel.desc': 'Crème, vert sapin, rouge, or — saison des fêtes (flocons sur l\'écran public)',
 
   'play.question': 'Question', 'play.questions': 'questions', 'play.grid': 'grille',
   'play.lookfor': 'Cherchez le', 'play.onyourgrid': 'sur votre grille',
@@ -382,6 +383,7 @@ const en = {
   'theme.suisse.desc': 'Off-white, slate, medical red — default',
   'theme.neon.desc': 'Midnight blue, teal, amber — high-tech',
   'theme.pop.desc': 'Cream, violet, coral — board game',
+  'theme.noel': 'Christmas chalet', 'theme.noel.desc': 'Cream, fir green, red, gold — festive season (snow on the public display)',
   'play.question': 'Question', 'play.questions': 'questions', 'play.grid': 'card',
   'play.lookfor': 'Look for', 'play.onyourgrid': 'on your card',
   'play.answer': 'Answer', 'play.autoreveal': 'Answer shown automatically\nwhen the timer ends', 'play.revealed': 'Answer shown',
@@ -586,6 +588,7 @@ const de = {
   'theme.suisse.desc': 'Gebrochenes Weiß, Schiefer, Medizinrot — Standard',
   'theme.neon.desc': 'Nachtblau, Türkis, Bernstein — Hightech',
   'theme.pop.desc': 'Creme, Violett, Koralle — Brettspiel',
+  'theme.noel': 'Weihnachtschalet', 'theme.noel.desc': 'Creme, Tannengrün, Rot, Gold — Festtage (Schneeflocken auf dem Publikumsbildschirm)',
   'play.question': 'Frage', 'play.questions': 'Fragen', 'play.grid': 'Karte',
   'play.lookfor': 'Suchen Sie die', 'play.onyourgrid': 'auf Ihrer Karte',
   'play.answer': 'Antwort', 'play.autoreveal': 'Antwort erscheint automatisch\nam Ende des Countdowns', 'play.revealed': 'Antwort angezeigt',

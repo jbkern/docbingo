@@ -54,6 +54,16 @@ export const AMBIANCES = {
   }
 };
 
+AMBIANCES.fetes = {
+  name: { fr: 'Fêtes', en: 'Festive', de: 'Festtage' },
+  // clochettes : sinus aigus courts avec harmonique, façon grelots
+  draw: () => { [1568, 1976].forEach((f, i) => { tone({ f, t: i * .07, d: .12, type: 'sine', g: .12 }); tone({ f: f * 2.5, t: i * .07, d: .06, type: 'sine', g: .04 }); }); },
+  reveal: () => [1319, 1568, 2093].forEach((f, i) => { tone({ f, t: i * .1, d: .25, type: 'sine', g: .12 }); tone({ f: f * 2.4, t: i * .1, d: .08, type: 'sine', g: .04 }); }),
+  tick: () => tone({ f: 2093, d: .03, g: .05, type: 'sine' }),
+  bingo: () => { [1319, 1568, 1760, 2093, 1760, 2093, 2637].forEach((f, i) => { tone({ f, t: i * .13, d: .22, type: 'sine', g: .13 }); tone({ f: f * 2.4, t: i * .13, d: .07, type: 'sine', g: .04 }); }); noise({ t: .9, d: .5, g: .04 }); },
+  end: () => [1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone({ f, t: i * .2, d: .5, type: 'sine', g: .12 }))
+};
+
 export function play(ambiance, event) {
   try { (AMBIANCES[ambiance] || AMBIANCES.classic)[event]?.(); } catch {}
 }
