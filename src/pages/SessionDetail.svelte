@@ -4,6 +4,7 @@
   import { get } from 'svelte/store';
   import { api } from '../lib/api.js';
   import { generateGridsPdf, generateSummaryPdf } from '../lib/pdf.js';
+  import Qr from '../components/Qr.svelte';
 
   export let id;
   let s = null;
@@ -63,10 +64,15 @@
   function slidesAfter(i) { return (s.slides || []).filter(sl => sl.afterIndex === i); }
   const slideIcon = { pause: '☕', case: '🩺', title: '🎬' };
 
+  $: joinUrl = s?.joinCode ? location.origin + location.pathname + '#/join/' + s.joinCode : '';
+  async function ensureJoinCode() { if (!s.joinCode) { const r = await api.post(`/api/sessions/${id}/join-code`, {}); s = { ...s, joinCode: r.code }; } return s.joinCode; }
   async function downloadPdf() {
     pdfBusy = true;
     try {
-      const bytes = await generateGridsPdf(s, s.grids, get(lang));
+      // en mode mixte/smartphone, chaque grille imprimée porte un QR code qui ouvre la session avec son code de grille
+      const withQr = (s.params.participation || 'mixed') !== 'paper';
+      if (withQr) await ensureJoinCode();
+      const bytes = await generateGridsPdf(s, s.grids, get(lang), { ...(withQr ? { joinUrl: location.origin + location.pathname + '#/join/' + s.joinCode } : {}), theme: document.documentElement.dataset.theme });
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -125,6 +131,16 @@
         {$t('sdetail.gridsinfo', { n: s.grids.length, p: s.params.participants })}
       </p>
       {#if s.params.participation === 'digital'}<div class="alert ok" style="margin-bottom:10px">📱 {$t('part.digital.hint')}</div>{/if}
+      {#if (s.params.participation || 'mixed') !== 'paper'}
+        <div class="row" style="gap:14px; align-items:center; margin-bottom:12px; padding:10px; border:1px dashed var(--border); border-radius:10px">
+          {#if s.joinCode}
+            <div style="background:#fff; padding:4px; border-radius:8px"><Qr text={joinUrl} size={96} /></div>
+            <div><div class="muted" style="font-size:12px">{$t('sdetail.joinqr')}</div><div style="font-size:24px; font-weight:900; letter-spacing:.15em; color:var(--accent)">{s.joinCode}</div><div class="muted" style="font-size:11.5px; font-family:ui-monospace,monospace">{joinUrl}</div></div>
+          {:else}
+            <button class="btn small secondary" on:click={ensureJoinCode}>📱 {$t('sdetail.makejoin')}</button><span class="muted" style="font-size:12px">{$t('sdetail.joinqr')}</span>
+          {/if}
+        </div>
+      {/if}
       <button class="btn" class:secondary={s.params.participation === 'digital'} on:click={downloadPdf} disabled={pdfBusy}>
         {pdfBusy ? $t('sdetail.generating') : '⬇ ' + $t('sdetail.downloadpdf')}
       </button>

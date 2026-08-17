@@ -5,6 +5,7 @@
   import { createChannel } from '../lib/sync.js';
   import { play as playSound } from '../lib/sound.js';
   import Projection from '../components/Projection.svelte';
+  import Qr from '../components/Qr.svelte';
   import Slide from '../components/Slide.svelte';
 
   export let sessionId;
@@ -353,8 +354,10 @@
       {#if joinCode}
         <div class="joinbox">
           <div class="dim" style="font-size:14px">📱 {$t('play.joinhint')}</div>
-          <div class="joinurl">{location.origin}{location.pathname}#/join</div>
-          <div class="joincode">{joinCode}</div>
+          <div class="row" style="gap:18px; align-items:center; justify-content:center; flex-wrap:wrap">
+            <div style="background:#fff; padding:6px; border-radius:10px"><Qr text={location.origin + location.pathname + '#/join/' + joinCode} size={132} /></div>
+            <div><div class="joinurl">{location.origin}{location.pathname}#/join</div><div class="joincode">{joinCode}</div></div>
+          </div>
           <div class="dim" style="font-size:14px">{participants.length} {$t('play.connected')}</div>
         </div>
       {/if}
@@ -524,6 +527,7 @@
           <div class="panel-title">👥 {$t('pres.participants')} <span class="tag" style="margin-left:auto">{participants.length}</span></div>
           <div class="muted" style="font-size:13px; line-height:1.6">
             {$t('pres.joinhelp')} <span class="url">{location.origin}{location.pathname}#/join</span> · {$t('pres.remotecode')} : <b style="font-size:20px; letter-spacing:.12em; color:var(--accent)">{joinCode || '…'}</b>
+            {#if joinCode}<span style="display:inline-block; vertical-align:middle; margin-left:10px; background:#fff; padding:3px; border-radius:6px"><Qr text={location.origin + location.pathname + '#/join/' + joinCode} size={64} /></span>{/if}
           </div>
           {#if participants.length}
             <div class="plist">

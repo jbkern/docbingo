@@ -166,6 +166,7 @@ const fr = {
   'sdetail.gridsinfo': '{n} grilles uniques ({p} participants + réserve). PDF au format A4 : deux grilles par feuille, à couper en deux (A5).',
   'sdetail.downloadpdf': 'Télécharger le PDF des grilles', 'sdetail.generating': 'Génération…',
   'sdetail.sheets': 'feuilles A4 à imprimer', 'sdetail.qorder': 'Questions de la session (ordre de tirage)',
+  'sdetail.joinqr': 'Code et QR code de participation sur smartphone (affichés aussi sur l\'écran public et imprimés sur chaque grille).', 'sdetail.makejoin': 'Générer le code de session',
   'sdetail.animate': 'Animer la session', 'sdetail.resumeanim': 'Reprendre l\'animation',
 
   'settings.title': 'Réglages', 'settings.lang': 'Langue', 'settings.theme': 'Thème visuel',
@@ -374,6 +375,7 @@ const en = {
   'sdetail.gridsinfo': '{n} unique cards ({p} participants + spares). A4 PDF: two cards per sheet, cut in half (A5).',
   'sdetail.downloadpdf': 'Download the cards PDF', 'sdetail.generating': 'Generating…',
   'sdetail.sheets': 'A4 sheets to print', 'sdetail.qorder': 'Session questions (draw order)',
+  'sdetail.joinqr': 'Smartphone join code and QR code (also shown on the public display and printed on every card).', 'sdetail.makejoin': 'Generate the session code',
   'sdetail.animate': 'Run the session', 'sdetail.resumeanim': 'Resume the session',
   'settings.title': 'Settings', 'settings.lang': 'Language', 'settings.theme': 'Visual theme',
   'settings.sounds': 'Sound effects', 'settings.animations': 'Visual animations',
@@ -579,6 +581,7 @@ const de = {
   'sdetail.gridsinfo': '{n} einzigartige Karten ({p} Teilnehmende + Reserve). A4-PDF: zwei Karten pro Blatt, in der Mitte schneiden (A5).',
   'sdetail.downloadpdf': 'Karten-PDF herunterladen', 'sdetail.generating': 'Generierung…',
   'sdetail.sheets': 'A4-Blätter zu drucken', 'sdetail.qorder': 'Fragen der Sitzung (Ziehungsreihenfolge)',
+  'sdetail.joinqr': 'Sitzungscode und QR-Code für die Smartphone-Teilnahme (auch auf dem Publikumsbildschirm und auf jeder Karte gedruckt).', 'sdetail.makejoin': 'Sitzungscode erzeugen',
   'sdetail.animate': 'Sitzung starten', 'sdetail.resumeanim': 'Sitzung fortsetzen',
   'settings.title': 'Einstellungen', 'settings.lang': 'Sprache', 'settings.theme': 'Design',
   'settings.sounds': 'Soundeffekte', 'settings.animations': 'Animationen',

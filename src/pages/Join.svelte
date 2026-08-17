@@ -4,10 +4,13 @@
   import InstallHint from '../lib/InstallHint.svelte';
 
   export let codeParam = null;
-  let code = (codeParam || '').toUpperCase();
+  // #/join/CODE ou #/join/CODE?g=G-014 (QR imprimé sur une grille papier)
+  const _raw = String(codeParam || '');
+  let code = _raw.split('?')[0].toUpperCase();
+  const _g = /[?&]g=([^&]+)/.exec(_raw)?.[1];
   let name = localStorage.getItem('docbingo_pname') || '';
-  let paper = '';
-  let usePaper = false;
+  let paper = _g ? decodeURIComponent(_g).toUpperCase() : '';
+  let usePaper = !!_g;
   let error = '';
   let busy = false;
 

@@ -1,5 +1,6 @@
 <script>
   import { t } from '../lib/i18n.js';
+  import Qr from './Qr.svelte';
   export let s;             // session (with questions)
   export let idx = 0;       // current question index
   export let phase = 'question'; // question | revealed
@@ -85,9 +86,20 @@
       </div>
     </div>
   </div>
+{:else if s && joinCode}
+  <!-- Salle d'attente sur l'écran public : code de session + QR code -->
+  <div class="proj lobby">
+    <div style="font-size:30px; font-weight:800; color:var(--proj-accent)">🩺 {s.name}</div>
+    <div class="dim" style="font-size:18px; margin:10px 0 18px">📱 {$t('play.joinhint')}</div>
+    <div style="display:flex; gap:28px; align-items:center; justify-content:center; flex-wrap:wrap">
+      <div style="background:#fff; padding:10px; border-radius:14px"><Qr text={location.origin + location.pathname + '#/join/' + joinCode} size={200} /></div>
+      <div style="text-align:left"><div style="font-family:ui-monospace,monospace; font-size:18px">{location.origin}{location.pathname}#/join</div><div style="font-size:64px; font-weight:900; letter-spacing:.18em; color:var(--proj-accent)">{joinCode}</div>{#if participants}<div class="dim">{participants} 👥</div>{/if}</div>
+    </div>
+  </div>
 {/if}
 
 <style>
+  .lobby { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 80vh; }
   .proj { flex: 1; min-height: 0; background: var(--proj-bg); color: var(--proj-ink); display: flex; flex-direction: column; }
   .dim { color: var(--proj-dim); }
   .p-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 34px 6px; font-size: 15px; }

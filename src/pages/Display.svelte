@@ -4,6 +4,7 @@
   import { api } from '../lib/api.js';
   import { createChannel } from '../lib/sync.js';
   import Projection from '../components/Projection.svelte';
+  import Qr from '../components/Qr.svelte';
   import Slide from '../components/Slide.svelte';
   import { play as playSound } from '../lib/sound.js';
 

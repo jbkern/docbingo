@@ -751,15 +751,26 @@ app.post('/api/join', h(async (req, res) => {
     if (!g) return res.status(404).json({ error: 'grid_not_found' });
     gridId = g.id; gridCode = g.code;
   } else {
-    const g = await get('SELECT id, code FROM grids WHERE session_id = ? AND id NOT IN (SELECT grid_id FROM participants WHERE session_id = ? AND grid_id IS NOT NULL) ORDER BY id LIMIT 1', [sid, sid]);
+    // Mode mixte : les grilles pré-générées sont supposées imprimées et distribuées sur papier → un smartphone sans code
+    // de grille reçoit toujours une grille NOUVELLE (jamais une grille imprimée), pour éviter tout doublon papier/écran.
+    // Mode smartphone seul : on réutilise les grilles pré-générées non attribuées (personne ne les imprime).
+    const mode = j(row.params, {}).participation || 'mixed';
+    const g = mode === 'digital'
+      ? await get('SELECT id, code FROM grids WHERE session_id = ? AND id NOT IN (SELECT grid_id FROM participants WHERE session_id = ? AND grid_id IS NOT NULL) ORDER BY id LIMIT 1', [sid, sid])
+      : await get("SELECT id, code FROM grids WHERE session_id = ? AND digital = 1 AND id NOT IN (SELECT grid_id FROM participants WHERE session_id = ? AND grid_id IS NOT NULL) ORDER BY id LIMIT 1", [sid, sid]);
     if (!g) {
-      // plus de grille libre : en générer une nouvelle
+      // générer une nouvelle grille, unique par rapport à toutes les grilles de la session (mêmes numéros = doublon)
       const params = j(row.params, {}); const N = j(row.question_order, []).length; const k = params.gridSize;
-      const nums = shuffle([...Array(N).keys()].map(i => i + 1)).slice(0, k * k);
-      const cells = []; for (let r = 0; r < k; r++) cells.push(nums.slice(r * k, (r + 1) * k));
+      const existing = new Set((await all('SELECT cells FROM grids WHERE session_id = ?', [sid])).map(r => j(r.cells, []).flat().sort((a, b) => a - b).join(',')));
+      let cells;
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const nums = shuffle([...Array(N).keys()].map(i => i + 1)).slice(0, k * k);
+        cells = []; for (let r = 0; r < k; r++) cells.push(nums.slice(r * k, (r + 1) * k));
+        if (!existing.has(nums.slice().sort((a, b) => a - b).join(','))) break;
+      }
       const cnt = (await get('SELECT COUNT(*) AS c FROM grids WHERE session_id = ?', [sid])).c;
       const codeG = 'G-' + String(cnt + 1).padStart(3, '0');
-      const info = await run('INSERT INTO grids (session_id, code, cells) VALUES (?, ?, ?)', [sid, codeG, JSON.stringify(cells)]);
+      const info = await run('INSERT INTO grids (session_id, code, cells, digital) VALUES (?, ?, ?, 1)', [sid, codeG, JSON.stringify(cells)]);
       gridId = info.lastInsertRowid; gridCode = codeG;
     } else { gridId = g.id; gridCode = g.code; }
   }
