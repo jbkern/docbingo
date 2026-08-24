@@ -51,6 +51,13 @@
     const blob = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = 'docbingo-collection-' + (collTags.trim().replace(/[^a-z0-9]+/gi, '-') || 'complete') + '.json'; a.click();
   }
+  async function downloadStd(fmt) {
+    const tk = localStorage.getItem('docbingo_token');
+    const qs = collTags.trim() ? '?tags=' + encodeURIComponent(collTags.trim()) : '';
+    const r = await fetch('/api/collections/export-' + fmt + qs, { headers: tk ? { 'X-DocBingo-Token': tk } : {} });
+    const blob = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'docbingo-' + (collTags.trim().replace(/[^a-z0-9]+/gi, '-') || 'complete') + (fmt === 'gift' ? '.gift' : '-qti.zip'); a.click();
+  }
   let saved = false;
   let aiEnabled = false;
   let aiKey = '';
@@ -141,7 +148,10 @@
       <input placeholder={$t('coll.tagsph')} bind:value={collTags} style="max-width:320px" list="alltags" />
       <datalist id="alltags">{#each allTags as tg}<option value={tg.name}></option>{/each}</datalist>
       <button class="btn small" on:click={downloadColl}>⬇ {$t('coll.download')}</button>
+      <button class="btn small secondary" on:click={() => downloadStd('gift')}>⬇ GIFT</button>
+      <button class="btn small secondary" on:click={() => downloadStd('qti')}>⬇ QTI 2.1</button>
     </div>
+    <div class="muted" style="margin-top:5px; font-size:12.5px">{$t('coll.stdhint')}</div>
   </div>
   <div>
     <label>{$t('coll.import')}</label>

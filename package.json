@@ -1,6 +1,6 @@
 {
   "name": "docbingo",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "DocBingo — plateforme de bingo QCM médical (serious game)",
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "@anthropic-ai/sdk": "^0.117.1",
     "@libsql/client": "^0.17.4",
     "express": "^5.2.1",
+    "jszip": "^3.10.1",
     "mammoth": "^1.12.1",
     "multer": "^2.0.2",
     "nodemailer": "^9.0.5",

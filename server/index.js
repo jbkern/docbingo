@@ -487,6 +487,10 @@ app.post('/api/import/parse', importUpload.single('file'), h(async (req, res) =>
       text = (await mammoth.extractRawText({ buffer: req.file.buffer })).value;
     } else {
       text = req.file.buffer.toString('utf8');
+      if (name.endsWith('.gift') || /(^|\n)\s*(::|\$CATEGORY)/.test(text.slice(0, 4000)) && /\{[^}]*[~=][^}]*\}/s.test(text)) {
+        const gq = parseGift(text);
+        if (gq.length) return res.json({ questions: gq, count: gq.length, format: 'gift' });
+      }
     }
   }
   const questions = rows ? parseTabular(rows) : parseFreeText(text);
@@ -938,6 +942,121 @@ app.get('/api/sessions/:id/stats', h(async (req, res) => {
 }));
 
 /* ---------- Collections : export / import (partage entre instances) ---------- */
+/* ---------- Formats standards : GIFT (Moodle) et QTI 2.1 ---------- */
+function giftEscape(t) { return String(t || '').replace(/\\/g, '\\\\').replace(/([~=#{}:])/g, '\\$1').replace(/\n/g, ' '); }
+function toGift(qs) {
+  let out = '// DocBingo — export GIFT (' + new Date().toISOString().slice(0, 10) + ') — ' + qs.length + ' questions\n';
+  out += '// Licence des contenus : CC BY-NC-SA 4.0 — Jean-Baptiste Kern & co-auteurs\n\n';
+  let lastCat = null;
+  for (const q of qs) {
+    const cat = 'DocBingo/' + (q.tags[0] || 'divers');
+    if (cat !== lastCat) { out += '$CATEGORY: $course$/' + cat + '\n\n'; lastCat = cat; }
+    const multi = q.correct.length > 1;
+    out += '::' + giftEscape(q.statement.slice(0, 60)) + '::' + giftEscape(q.statement) + ' {\n';
+    for (let i = 0; i < q.options.length; i++) {
+      const good = q.correct.includes(i);
+      if (multi) out += (good ? '\t~%' + (100 / q.correct.length).toFixed(5) + '%' : '\t~%-100%') + giftEscape(q.options[i]) + '\n';
+      else out += (good ? '\t=' : '\t~') + giftEscape(q.options[i]) + '\n';
+    }
+    if (q.explanation) out += '\t#### ' + giftEscape(q.explanation) + '\n';
+    out += '}\n\n';
+  }
+  return out;
+}
+async function selectForExport(req) {
+  const tags = String(req.query.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  let qs = await allQuestions(true);
+  if (tags.length) qs = qs.filter(q => tags.some(t => q.tags.includes(t)));
+  return { qs, tags };
+}
+app.get('/api/collections/export-gift', h(async (req, res) => {
+  const { qs, tags } = await selectForExport(req);
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="docbingo-${tags.join('-') || 'complete'}.gift"`);
+  res.send(toGift(qs));
+}));
+const xmlEsc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function qtiItem(q, id) {
+  const multi = q.correct.length > 1;
+  const ids = q.options.map((_, i) => 'C' + (i + 1));
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" identifier="${id}" title="${xmlEsc(q.statement.slice(0, 80))}" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="${multi ? 'multiple' : 'single'}" baseType="identifier">
+    <correctResponse>${q.correct.map(i => `<value>${ids[i]}</value>`).join('')}</correctResponse>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float"><defaultValue><value>0</value></defaultValue></outcomeDeclaration>
+  <itemBody>
+    <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="${multi ? q.options.length : 1}">
+      <prompt>${xmlEsc(q.statement)}</prompt>
+      ${q.options.map((o, i) => `<simpleChoice identifier="${ids[i]}">${xmlEsc(o)}</simpleChoice>`).join('\n      ')}
+    </choiceInteraction>
+  </itemBody>
+  ${q.explanation ? `<modalFeedback outcomeIdentifier="FEEDBACK" identifier="general" showHide="show">${xmlEsc(q.explanation)}</modalFeedback>` : ''}
+  <responseProcessing template="http://www.imsglobal.org/question/qti_v2p1/rptemplates/match_correct"/>
+</assessmentItem>`;
+}
+app.get('/api/collections/export-qti', h(async (req, res) => {
+  const { qs, tags } = await selectForExport(req);
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+  const resources = [];
+  qs.forEach((q, i) => {
+    const id = 'docbingo-q' + q.id, file = 'items/' + id + '.xml';
+    zip.file(file, qtiItem(q, id));
+    resources.push(`<resource identifier="${id}" type="imsqti_item_xmlv2p1" href="${file}"><file href="${file}"/></resource>`);
+  });
+  zip.file('imsmanifest.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsglobal.org/xsd/imscp_v1p1" identifier="docbingo-export">
+  <metadata><schema>IMS Content</schema><schemaversion>1.1.3</schemaversion></metadata>
+  <organizations/>
+  <resources>
+    ${resources.join('\n    ')}
+  </resources>
+</manifest>`);
+  const buf = await zip.generateAsync({ type: 'nodebuffer' });
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="docbingo-qti-${tags.join('-') || 'complete'}.zip"`);
+  res.send(buf);
+}));
+/* Import GIFT : questions à choix (simple et multiple) uniquement ; le reste est ignoré */
+function parseGift(text) {
+  const out = [];
+  // retirer les commentaires et les catégories
+  const cleaned = text.replace(/^\s*\/\/.*$/gm, '').replace(/^\s*\$CATEGORY:.*$/gm, '');
+  const re = /(?:::((?:[^:]|:(?!:))*)::)?([^{}]*?)\{([^}]*)\}/gs;
+  let m;
+  while ((m = re.exec(cleaned))) {
+    let rawStatement = (m[2] || m[1] || '');
+    // titre ::…:: éventuellement resté collé à l'énoncé (titres contenant des « : » échappés)
+    const tm = /^\s*::(.*?)::(.*)$/s.exec(rawStatement);
+    if (tm) rawStatement = tm[2].trim() || tm[1];
+    const statement = rawStatement.replace(/\\([~=#{}:])/g, '$1').replace(/\s+/g, ' ').trim();
+    const body = m[3];
+    if (!statement || !/[~=]/.test(body)) continue;
+    const answers = [];
+    const are = /([~=])(%(-?[\d.]+)%)?((?:[^~=#\\]|\\.)+)(?:#((?:[^~=\\]|\\.)*))?/g;
+    let a; let feedbackGeneral = '';
+    const gi = body.indexOf('####');
+    let choicesPart = body;
+    if (gi >= 0) { feedbackGeneral = body.slice(gi + 4).replace(/\\([~=#{}:])/g, '$1').trim(); choicesPart = body.slice(0, gi); }
+    while ((a = are.exec(choicesPart))) {
+      const txt = a[4].replace(/\\([~=#{}:])/g, '$1').trim();
+      if (!txt) continue;
+      const pct = a[3] !== undefined ? parseFloat(a[3]) : null;
+      const good = a[1] === '=' || (pct !== null && pct > 0);
+      answers.push({ text: txt, good });
+    }
+    if (answers.length < 2 || !answers.some(x => x.good)) continue; // vrai/faux, texte, numérique… ignorés
+    out.push({
+      statement,
+      options: answers.map(x => x.text).slice(0, 5),
+      correct: answers.map((x, i) => (x.good ? i : -1)).filter(i => i >= 0 && i < 5),
+      explanation: feedbackGeneral || null, tags: [], difficulty: 2
+    });
+  }
+  return out;
+}
+
 app.get('/api/collections/export', h(async (req, res) => {
   const tags = String(req.query.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
   let qs = await allQuestions(true);

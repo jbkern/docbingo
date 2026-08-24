@@ -20,6 +20,7 @@
   import Demo from './pages/Demo.svelte';
   import InstallHint from './lib/InstallHint.svelte';
   import Charter from './pages/Charter.svelte';
+  import Landing from './pages/Landing.svelte';
   import { charter as charterText } from './lib/charter.js';
 
   let route = { page: 'questions', param: null };
@@ -136,32 +137,25 @@
 {:else if isRemote}
   <Remote sessionId={route.param} />
 {:else if needLogin}
-  <div class="login-bg">
-    <div class="login-box">
-      <svg width="46" height="46" viewBox="0 0 100 100">
-        <rect x="5" y="5" width="90" height="90" rx="16" fill="var(--panel)" stroke="var(--accent)" stroke-width="6"/>
-        <circle cx="50" cy="50" r="17" fill="var(--accent-2)"/>
-        <rect x="46" y="39" width="8" height="22" rx="2" fill="var(--accent-2-ink)"/>
-        <rect x="39" y="46" width="22" height="8" rx="2" fill="var(--accent-2-ink)"/>
-      </svg>
-      <h1 style="margin:10px 0 18px">DocBingo</h1>
-      <input type="email" placeholder="Email" bind:value={email} autocomplete="username" style="max-width:280px; text-align:center; margin-bottom:8px" />
+  <Landing>
+    <div class="login-inner">
+      <h2 style="margin:0 0 12px">{$t('login.enter')}</h2>
+      <input type="email" placeholder="Email" bind:value={email} autocomplete="username" style="margin-bottom:8px" />
       {#if !forgotMode}
         <input type="password" placeholder={$t('login.password')} bind:value={password} autocomplete="current-password"
-          on:keydown={(e) => e.key === 'Enter' && doLogin()} style="max-width:280px; text-align:center" />
+          on:keydown={(e) => e.key === 'Enter' && doLogin()} />
         {#if loginError}<div style="color:var(--danger); font-size:13px; margin-top:8px; font-weight:700">{$t('login.error')}</div>{/if}
-        <button class="btn" style="margin-top:14px" on:click={doLogin}>{$t('login.enter')}</button>
+        <button class="btn" style="margin-top:12px; width:100%" on:click={doLogin}>{$t('login.enter')}</button>
         <button class="linkbtn" on:click={() => { forgotMode = true; forgotMsg = ''; }}>{$t('login.forgot')}</button>
       {:else}
-        <div class="muted" style="max-width:300px; line-height:1.5; margin:4px 0 10px">{mailEnabled ? $t('login.forgothelp') : $t('login.forgotnomail')}</div>
-        {#if mailEnabled}<button class="btn" on:click={forgot} disabled={!email.includes('@')}>{$t('login.forgotsend')}</button>{/if}
-        {#if forgotMsg}<div class="alert ok" style="margin-top:10px; max-width:300px">{forgotMsg}</div>{/if}
+        <div class="muted" style="line-height:1.5; margin:4px 0 10px">{mailEnabled ? $t('login.forgothelp') : $t('login.forgotnomail')}</div>
+        {#if mailEnabled}<button class="btn" style="width:100%" on:click={forgot} disabled={!email.includes('@')}>{$t('login.forgotsend')}</button>{/if}
+        {#if forgotMsg}<div class="alert ok" style="margin-top:10px">{forgotMsg}</div>{/if}
         <button class="linkbtn" on:click={() => (forgotMode = false)}>← {$t('login.enter')}</button>
       {/if}
-      <div class="muted" style="margin-top:14px; font-size:12.5px; max-width:300px; line-height:1.5">{$t('login.hint')}</div>
-      <a class="muted" href="#/about" style="margin-top:12px; font-size:12px">{$t('about.title')}</a>
+      <div class="muted" style="margin-top:12px; font-size:12.5px; line-height:1.5">{$t('login.hint')}</div>
     </div>
-  </div>
+  </Landing>
 {:else if isDisplay}
   <Display sessionId={route.param} {settings} />
 {:else if isPlay}
@@ -274,6 +268,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(10,20,35,.55); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 14px; }
   .modal { background: var(--bg); border-radius: 14px; max-width: 760px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
   .modal-body { overflow: auto; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--panel); }
+  .login-inner { display: flex; flex-direction: column; }
   .login-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
   .login-box { text-align: center; display: flex; flex-direction: column; align-items: center; padding: 30px; }
   .resume {

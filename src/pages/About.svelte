@@ -6,7 +6,7 @@
 <div class="about">
   <div class="row" style="gap:14px; margin-bottom:18px">
     <svg width="54" height="54" viewBox="0 0 100 100"><rect x="5" y="5" width="90" height="90" rx="16" fill="var(--panel)" stroke="var(--accent)" stroke-width="6"/><circle cx="50" cy="50" r="17" fill="var(--accent-2)"/><rect x="46" y="39" width="8" height="22" rx="2" fill="var(--accent-2-ink)"/><rect x="39" y="46" width="22" height="8" rx="2" fill="var(--accent-2-ink)"/></svg>
-    <div><h1>{$t('about.title')}</h1><div class="muted">{$t('app.tagline')} · v0.9</div></div>
+    <div><h1>{$t('about.title')}</h1><div class="muted">{$t('app.tagline')} · v0.10</div></div>
   </div>
 
   <div class="card sec">

@@ -93,7 +93,7 @@
     {#if mode === 'file'}
       <p class="muted" style="line-height:1.5">{$t('import.filehelp')}</p>
       <div class="row">
-        <input type="file" accept=".csv,.xlsx,.xls,.docx,.txt" on:change={(e) => (file = e.target.files?.[0] || null)} style="max-width:420px" />
+        <input type="file" accept=".csv,.xlsx,.xls,.docx,.txt,.gift" on:change={(e) => (file = e.target.files?.[0] || null)} style="max-width:420px" />
         <button class="btn small secondary" on:click={downloadTemplate}>⬇ {$t('import.template')}</button>
       </div>
       <div><button class="btn" on:click={parse} disabled={!file || busy}>{busy ? '…' : $t('import.analyze')}</button></div>
