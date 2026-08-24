@@ -1,9 +1,10 @@
 <script>
   import { t } from '../lib/i18n.js';
+  import { AUTHOR, withAuthor } from '../lib/author.js';
   const year = new Date().getFullYear();
 </script>
 
-<div class="about">
+<div class="about" data-nosnippet>
   <div class="row" style="gap:14px; margin-bottom:18px">
     <svg width="54" height="54" viewBox="0 0 100 100"><rect x="5" y="5" width="90" height="90" rx="16" fill="var(--panel)" stroke="var(--accent)" stroke-width="6"/><circle cx="50" cy="50" r="17" fill="var(--accent-2)"/><rect x="46" y="39" width="8" height="22" rx="2" fill="var(--accent-2-ink)"/><rect x="39" y="46" width="22" height="8" rx="2" fill="var(--accent-2-ink)"/></svg>
     <div><h1>{$t('about.title')}</h1><div class="muted">{$t('app.tagline')} · v0.10</div></div>
@@ -11,7 +12,7 @@
 
   <div class="card sec">
     <h2>{$t('about.ip')}</h2>
-    <p><b>© {year} Jean-Baptiste Kern & {$t('about.coauthors')}.</b> {$t('about.ipdesc')}</p>
+    <p><b>© {year} {AUTHOR} & {$t('about.coauthors')}.</b> {withAuthor($t('about.ipdesc'))}</p>
   </div>
 
   <div class="card sec">
@@ -34,7 +35,7 @@
 
   <div class="card sec">
     <h2>{$t('about.brand')}</h2>
-    <p>{$t('about.branddesc')}</p>
+    <p>{withAuthor($t('about.branddesc'))}</p>
   </div>
 
   <div class="card sec">
@@ -44,7 +45,7 @@
 
   <div class="card sec">
     <h2>{$t('about.credits')}</h2>
-    <p>{$t('about.creditsdesc')}</p>
+    <p>{withAuthor($t('about.creditsdesc'))}</p>
     <p class="muted">Svelte · Vite · Express · libSQL/Turso · pdf-lib · Render — {$t('about.thirdparty')}</p>
   </div>
   <p class="muted" style="margin-top:14px">{$t('about.disclaimer')}</p>

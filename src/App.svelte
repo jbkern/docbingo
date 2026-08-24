@@ -32,6 +32,12 @@
     const [page, param] = h.split('/');
     route = { page: page || 'home', param: param || null };
     if (page === 'reset' && param) { resetToken = param; }
+    // pages juridiques : demander aux moteurs de ne pas les indexer ni en afficher d'extrait
+    let m = document.querySelector('meta[name="robots"]');
+    if (['about', 'charter'].includes(page)) {
+      if (!m) { m = document.createElement('meta'); m.name = 'robots'; document.head.appendChild(m); }
+      m.content = 'noindex, nosnippet';
+    } else if (m) m.remove();
   }
 
   async function loadSettings() {
@@ -224,7 +230,7 @@
       {:else if route.page === 'charter'}<Charter />
       {:else}<Home {user} />{/if}
     </main>
-    <footer class="foot"><span>DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs</span> · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{ct.title}</a> · <a href={$lang === 'fr' ? '/guide.html' : '/guide-' + $lang + '.html'} target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
+    <footer class="foot"><span>DocBingo © {new Date().getFullYear()}</span> · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{ct.title}</a> · <a href={$lang === 'fr' ? '/guide.html' : '/guide-' + $lang + '.html'} target="_blank">{$t('settings.openguide')}</a> · <span>AGPL-3.0 · CC BY-NC-SA 4.0</span></footer>
   </div>
 {/if}
 

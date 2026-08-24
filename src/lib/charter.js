@@ -7,7 +7,7 @@ export const charter = {
   fr: {
     title: 'Charte d\'utilisation',
     subtitle: 'Cadre légal, éthique et pédagogique de DocBingo — version 1 du 15 août 2026',
-    intro: 'DocBingo est un outil de formation par le jeu (serious game) développé à titre personnel par Jean-Baptiste Kern, mis à disposition gratuitement, sans lien avec une institution et sans promotion institutionnelle. En créant un compte ou en utilisant la plateforme, vous acceptez la présente charte, qui complète les mentions légales et les licences (AGPL-3.0 pour le logiciel, CC BY-NC-SA 4.0 pour les contenus).',
+    intro: 'DocBingo est un outil de formation par le jeu (serious game) développé à titre personnel par §A§, mis à disposition gratuitement, sans lien avec une institution et sans promotion institutionnelle. En créant un compte ou en utilisant la plateforme, vous acceptez la présente charte, qui complète les mentions légales et les licences (AGPL-3.0 pour le logiciel, CC BY-NC-SA 4.0 pour les contenus).',
     accept: 'J\'ai lu la charte d\'utilisation et je m\'engage à la respecter.',
     acceptBtn: 'Accepter et continuer',
     mustAccept: 'L\'acceptation de la charte est nécessaire pour créer ou importer des questions et des cas cliniques.',
@@ -21,7 +21,7 @@ export const charter = {
       ] },
       { h: '2. Droits d\'auteur des supports', p: [
         'Vous ne pouvez utiliser une image, un schéma, un extrait de texte ou tout autre support que si vous en détenez les droits ou si sa licence l\'autorise (œuvre personnelle, domaine public, licence Creative Commons compatible avec CC BY-NC-SA 4.0). Les captures d\'ouvrages, d\'atlas, d\'articles ou de sites protégés ne sont pas admises sans autorisation. Indiquez la source dans l\'explication lorsque la licence l\'exige (loi fédérale sur le droit d\'auteur, LDA).',
-        'En publiant ou en proposant une question, vous confirmez disposer des droits nécessaires et vous placez votre contribution sous licence CC BY-NC-SA 4.0 (attribution « Jean-Baptiste Kern & co-auteurs »), ce qui permet le partage entre instances DocBingo et la réutilisation pédagogique non commerciale.'
+        'En publiant ou en proposant une question, vous confirmez disposer des droits nécessaires et vous placez votre contribution sous licence CC BY-NC-SA 4.0 (attribution « §A§ & co-auteurs »), ce qui permet le partage entre instances DocBingo et la réutilisation pédagogique non commerciale.'
       ] },
       { h: '3. Contenus appropriés', p: [
         'Les contenus doivent être exacts au mieux des connaissances actuelles, sourcés lorsque c\'est possible, et rédigés avec respect. Sont exclus les contenus discriminatoires, stigmatisants, dénigrants, à caractère sexuel non justifié par la pédagogie, ou portant atteinte à la dignité des personnes soignées et soignantes.',
@@ -54,7 +54,7 @@ export const charter = {
   en: {
     title: 'Terms of use',
     subtitle: 'Legal, ethical and educational framework of DocBingo — version 1, 15 August 2026',
-    intro: 'DocBingo is a game-based learning tool (serious game) developed personally by Jean-Baptiste Kern and provided free of charge, independently of any institution and without institutional endorsement. By creating an account or using the platform you accept these terms, which complement the legal notice and licences (AGPL-3.0 for the software, CC BY-NC-SA 4.0 for content).',
+    intro: 'DocBingo is a game-based learning tool (serious game) developed personally by §A§ and provided free of charge, independently of any institution and without institutional endorsement. By creating an account or using the platform you accept these terms, which complement the legal notice and licences (AGPL-3.0 for the software, CC BY-NC-SA 4.0 for content).',
     accept: 'I have read the terms of use and I undertake to comply with them.',
     acceptBtn: 'Accept and continue',
     mustAccept: 'Accepting the terms is required before creating or importing questions and clinical cases.',
@@ -68,7 +68,7 @@ export const charter = {
       ] },
       { h: '2. Copyright of visual material', p: [
         'You may only use an image, diagram, text excerpt or other material if you hold the rights or its licence allows it (own work, public domain, Creative Commons licence compatible with CC BY-NC-SA 4.0). Screenshots of textbooks, atlases, articles or protected websites are not allowed without permission. Credit the source in the explanation where the licence requires it (Swiss Copyright Act).',
-        'By publishing or proposing a question you confirm that you hold the necessary rights and you place your contribution under CC BY-NC-SA 4.0 (attribution “Jean-Baptiste Kern & co-authors”), which allows sharing between DocBingo instances and non-commercial educational reuse.'
+        'By publishing or proposing a question you confirm that you hold the necessary rights and you place your contribution under CC BY-NC-SA 4.0 (attribution “§A§ & co-authors”), which allows sharing between DocBingo instances and non-commercial educational reuse.'
       ] },
       { h: '3. Appropriate content', p: [
         'Content must be accurate to the best of current knowledge, sourced where possible, and written respectfully. Discriminatory, stigmatising, disparaging or sexual content not justified by teaching purposes, or content undermining the dignity of patients and carers, is excluded.',
@@ -101,7 +101,7 @@ export const charter = {
   de: {
     title: 'Nutzungsordnung',
     subtitle: 'Rechtlicher, ethischer und pädagogischer Rahmen von DocBingo — Version 1 vom 15. August 2026',
-    intro: 'DocBingo ist ein spielbasiertes Lernwerkzeug (Serious Game), das Jean-Baptiste Kern privat entwickelt hat und kostenlos, unabhängig von jeder Institution und ohne institutionelle Förderung zur Verfügung stellt. Mit dem Erstellen eines Kontos oder der Nutzung der Plattform akzeptieren Sie diese Nutzungsordnung, die das Impressum und die Lizenzen (AGPL-3.0 für die Software, CC BY-NC-SA 4.0 für Inhalte) ergänzt.',
+    intro: 'DocBingo ist ein spielbasiertes Lernwerkzeug (Serious Game), das §A§ privat entwickelt hat und kostenlos, unabhängig von jeder Institution und ohne institutionelle Förderung zur Verfügung stellt. Mit dem Erstellen eines Kontos oder der Nutzung der Plattform akzeptieren Sie diese Nutzungsordnung, die das Impressum und die Lizenzen (AGPL-3.0 für die Software, CC BY-NC-SA 4.0 für Inhalte) ergänzt.',
     accept: 'Ich habe die Nutzungsordnung gelesen und verpflichte mich, sie einzuhalten.',
     acceptBtn: 'Akzeptieren und weiter',
     mustAccept: 'Die Annahme der Nutzungsordnung ist erforderlich, um Fragen und klinische Fälle zu erstellen oder zu importieren.',
@@ -115,7 +115,7 @@ export const charter = {
       ] },
       { h: '2. Urheberrechte am Bildmaterial', p: [
         'Bilder, Schemata, Textauszüge oder anderes Material dürfen nur verwendet werden, wenn Sie die Rechte besitzen oder die Lizenz dies erlaubt (eigenes Werk, gemeinfrei, mit CC BY-NC-SA 4.0 kompatible Creative-Commons-Lizenz). Screenshots aus Lehrbüchern, Atlanten, Artikeln oder geschützten Websites sind ohne Erlaubnis nicht zulässig. Geben Sie die Quelle in der Erklärung an, wenn die Lizenz es verlangt (Urheberrechtsgesetz, URG).',
-        'Mit dem Veröffentlichen oder Vorschlagen einer Frage bestätigen Sie, über die nötigen Rechte zu verfügen, und stellen Ihren Beitrag unter CC BY-NC-SA 4.0 (Namensnennung «Jean-Baptiste Kern & Mitautor/innen»), was den Austausch zwischen DocBingo-Instanzen und die nichtkommerzielle pädagogische Weiterverwendung erlaubt.'
+        'Mit dem Veröffentlichen oder Vorschlagen einer Frage bestätigen Sie, über die nötigen Rechte zu verfügen, und stellen Ihren Beitrag unter CC BY-NC-SA 4.0 (Namensnennung «§A§ & Mitautor/innen»), was den Austausch zwischen DocBingo-Instanzen und die nichtkommerzielle pädagogische Weiterverwendung erlaubt.'
       ] },
       { h: '3. Angemessene Inhalte', p: [
         'Inhalte müssen nach bestem aktuellem Wissen korrekt, wenn möglich belegt und respektvoll formuliert sein. Ausgeschlossen sind diskriminierende, stigmatisierende, herabsetzende oder pädagogisch nicht begründete sexuelle Inhalte sowie Inhalte, die die Würde von Patient/innen und Pflegenden verletzen.',

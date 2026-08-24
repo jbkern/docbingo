@@ -63,7 +63,7 @@
   </section>
 
   <footer class="lfoot">
-    DocBingo © {new Date().getFullYear()} Jean-Baptiste Kern & co-auteurs · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{$t('charter.title')}</a> · AGPL-3.0 · CC BY-NC-SA 4.0
+    DocBingo © {new Date().getFullYear()} · <a href="#/about">{$t('about.title')}</a> · <a href="#/charter">{$t('charter.title')}</a> · AGPL-3.0 · CC BY-NC-SA 4.0
   </footer>
 </div>
 

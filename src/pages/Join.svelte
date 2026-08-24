@@ -211,7 +211,7 @@
     {/if}
     <button class="link" on:click={leave}>{$t('join.leave')}</button>
   {/if}
-  <div class="muted" style="text-align:center; font-size:11px; margin-top:16px">DocBingo © Jean-Baptiste Kern & co-auteurs · <a href="#/about" style="color:inherit">{$t('about.title')}</a></div>
+  <div class="muted" style="text-align:center; font-size:11px; margin-top:16px">DocBingo · <a href="#/about" style="color:inherit">{$t('about.title')}</a></div>
 </div>
 
 <style>

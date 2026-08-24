@@ -946,7 +946,7 @@ app.get('/api/sessions/:id/stats', h(async (req, res) => {
 function giftEscape(t) { return String(t || '').replace(/\\/g, '\\\\').replace(/([~=#{}:])/g, '\\$1').replace(/\n/g, ' '); }
 function toGift(qs) {
   let out = '// DocBingo — export GIFT (' + new Date().toISOString().slice(0, 10) + ') — ' + qs.length + ' questions\n';
-  out += '// Licence des contenus : CC BY-NC-SA 4.0 — Jean-Baptiste Kern & co-auteurs\n\n';
+  out += '// Licence des contenus : CC BY-NC-SA 4.0 — auteur·es de l\'instance DocBingo (docbingo.ch → À propos)\n\n';
   let lastCat = null;
   for (const q of qs) {
     const cat = 'DocBingo/' + (q.tags[0] || 'divers');
