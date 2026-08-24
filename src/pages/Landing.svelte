@@ -59,7 +59,7 @@
   <section class="trust">
     <div class="tcard">📜 <b>{$t('charter.title')}</b><p>{$t('landing.t.charter')}</p><a href="#/charter">{$t('charter.link')} →</a></div>
     <div class="tcard">⚖️ <b>{$t('landing.t.lictitle')}</b><p>{$t('landing.t.lic')}</p><a href="#/about">{$t('about.title')} →</a></div>
-    <div class="tcard">🔒 <b>{$t('landing.t.datatitle')}</b><p>{$t('landing.t.data')}</p><a href="https://github.com/jbkern/docbingo" target="_blank" rel="noopener">github.com/jbkern/docbingo →</a></div>
+    <div class="tcard">🔒 <b>{$t('landing.t.datatitle')}</b><p>{$t('landing.t.data')}</p><a href="#/about">{$t('about.title')} →</a></div>
   </section>
 
   <footer class="lfoot">

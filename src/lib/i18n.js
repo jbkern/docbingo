@@ -39,7 +39,7 @@ const fr = {
   'home.steps': 'En 4 étapes', 'home.step1': 'Alimenter la banque de questions (saisie, import, IA)', 'home.step2': 'Créer une session et imprimer les grilles', 'home.step3': 'Le jour J : ouvrir l\'écran public, partager le code aux smartphones', 'home.step4': 'Animer, vérifier les bingos, distribuer la synthèse',
 
   'login.password': 'Mot de passe', 'login.error': 'Identifiants incorrects', 'login.enter': 'Se connecter', 'login.logout': 'Se déconnecter',
-  'login.hint': 'Utilisez l\'email et le mot de passe fournis par l\'administrateur. Ancienne connexion par mot de passe unique : laissez l\'email vide.',
+  'login.hint': 'Utilisez l\'email et le mot de passe fournis par un·e administrateur·rice de votre instance.',
   'login.mustchange': 'Vous utilisez un mot de passe temporaire : changez-le dans les réglages.',
   'nav.review': 'À valider', 'role.admin': 'administrateur', 'role.author': 'auteur',
   'status.all': 'Tous statuts', 'status.published': 'Publiée', 'status.proposed': 'Proposée', 'status.draft': 'Brouillon',
@@ -254,7 +254,7 @@ const en = {
   'home.steps': 'In 4 steps', 'home.step1': 'Fill the question bank (typing, import, AI)', 'home.step2': 'Create a session and print the cards', 'home.step3': 'On the day: open the public display, share the code to phones', 'home.step4': 'Run, verify bingos, hand out the summary',
 
   'login.password': 'Password', 'login.error': 'Wrong credentials', 'login.enter': 'Sign in', 'login.logout': 'Sign out',
-  'login.hint': 'Use the email and password given by the administrator. Legacy single-password login: leave the email empty.',
+  'login.hint': 'Use the email and password provided by an administrator of your instance.',
   'login.mustchange': 'You are using a temporary password: change it in Settings.',
   'nav.review': 'To review', 'role.admin': 'administrator', 'role.author': 'author',
   'status.all': 'All statuses', 'status.published': 'Published', 'status.proposed': 'Proposed', 'status.draft': 'Draft',
@@ -462,7 +462,7 @@ const de = {
   'home.steps': 'In 4 Schritten', 'home.step1': 'Fragenbank füllen (Eingabe, Import, KI)', 'home.step2': 'Sitzung erstellen und Karten drucken', 'home.step3': 'Am Tag: Publikumsbildschirm öffnen, Code an Smartphones geben', 'home.step4': 'Moderieren, Bingos prüfen, Zusammenfassung verteilen',
 
   'login.password': 'Passwort', 'login.error': 'Falsche Anmeldedaten', 'login.enter': 'Anmelden', 'login.logout': 'Abmelden',
-  'login.hint': 'Verwenden Sie E-Mail und Passwort vom Administrator. Alte Anmeldung mit Einzelpasswort: E-Mail leer lassen.',
+  'login.hint': 'Verwenden Sie die von einer Administratorin oder einem Administrator Ihrer Instanz erhaltenen Zugangsdaten.',
   'login.mustchange': 'Sie verwenden ein temporäres Passwort: Ändern Sie es in den Einstellungen.',
   'nav.review': 'Zu prüfen', 'role.admin': 'Administrator', 'role.author': 'Autor/in',
   'status.all': 'Alle Status', 'status.published': 'Veröffentlicht', 'status.proposed': 'Vorgeschlagen', 'status.draft': 'Entwurf',
