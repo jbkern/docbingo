@@ -293,6 +293,7 @@
     if (e.key === 'ArrowLeft') prev();
     if (e.key === 'p') paused = !paused;
   }
+  async function exitToHome() { paused = true; await save(); location.hash = '#/home'; }
   async function save(status) {
     try {
       await api.post(`/api/sessions/${sessionId}/state`, {
@@ -367,6 +368,7 @@
       </div>
       <div class="dim" style="margin-top:22px; font-size:14px">{$t('play.shortcuts')}</div>
       <a class="dim" style="display:block; margin-top:8px; font-size:13px" href={'#/session/' + s.id}>← {$t('play.back')}</a>
+      <a class="dim" style="display:block; margin-top:4px; font-size:13px" href="#/home">🏠 {$t('nav.home')}</a>
     </div>
   </div>
 
@@ -416,6 +418,7 @@
       <button on:click={launchBonus} disabled={!!bonus || phase !== 'revealed'} title={$t('play.bonushint')}>⚡ Bonus</button>
       <button class="bingo" on:click={() => { verifyOpen = true; paused = true; }}>🎉 {$t('play.verifybingo')}</button>
       {#if winners.length}<span class="dim" style="font-size:13px">🏆 {winners.map(w => w.code).join(' · ')}</span>{/if}
+      <button on:click={exitToHome} title={$t('play.exithint')} style="margin-left:auto">🏠 {$t('play.exit')}</button>
     </div>
   </div>
 
@@ -429,6 +432,7 @@
       <span class="dim" style="font-size:13px">{$t('pres.elapsed')} <b style="color:var(--ink)">{elapsedMin} min</b> · {$t('pres.remaining')} <b style="color:var(--ink)">~{remainingMin} min</b></span>
       <span class="mini-timer" class:pausedc={paused}>⏱ {phase === 'question' ? secondsLeft + ' s' : '—'}</span>
       <span class="disp-dot" class:on={displayConnected} title={displayConnected ? $t('pres.displayon') : $t('pres.displayoff')}>🖥️</span>
+      <button class="exitbtn" on:click={exitToHome} title={$t('play.exithint')}>🏠 {$t('play.exit')}</button>
     </div>
 
     {#if slide}
@@ -671,6 +675,8 @@
 
   /* Console présentateur */
   .console { min-height: 100vh; background: var(--bg); color: var(--ink); padding: 14px 18px 24px; }
+  .exitbtn { border: 1px solid var(--border); background: var(--panel); color: var(--ink-dim); border-radius: 8px; padding: 5px 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .exitbtn:hover { color: var(--danger); border-color: var(--danger); }
   .c-topbar {
     display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
     background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
