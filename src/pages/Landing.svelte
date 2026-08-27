@@ -1,9 +1,8 @@
 <script>
-  /* Page vitrine publique (visiteurs non connectés) : présentation, fonctionnement, confiance, connexion. */
+  /* Page vitrine publique (visiteurs non connectés) — version épurée : héros + 4 atouts + bandeau confiance. */
   import { t, lang } from '../lib/i18n.js';
   const features = [
-    { icon: '🎱', k: 'bank' }, { icon: '🖨️', k: 'grids' }, { icon: '📱', k: 'phones' },
-    { icon: '🖥️', k: 'present' }, { icon: '✨', k: 'ai' }, { icon: '📊', k: 'stats' }
+    { icon: '🎱', k: 'bank' }, { icon: '🖨️', k: 'grids' }, { icon: '🖥️', k: 'present' }, { icon: '📊', k: 'stats' }
   ];
 </script>
 
@@ -30,36 +29,23 @@
         <li>{$t('landing.tick2')}</li>
         <li>{$t('landing.tick3')}</li>
       </ul>
-      <div class="muted" style="font-size:12.5px; margin-top:10px">{$t('landing.freenote')}</div>
     </div>
     <div class="login-card">
       <slot />
     </div>
   </section>
 
-  <section>
-    <h2>{$t('landing.features')}</h2>
-    <div class="feat-grid">
-      {#each features as f}
-        <div class="feat"><span class="fi">{f.icon}</span><b>{$t('landing.f.' + f.k)}</b><p>{$t('landing.f.' + f.k + '.d')}</p></div>
-      {/each}
-    </div>
+  <section class="feat-grid">
+    {#each features as f}
+      <div class="feat"><span class="fi">{f.icon}</span><b>{$t('landing.f.' + f.k)}</b><p>{$t('landing.f.' + f.k + '.d')}</p></div>
+    {/each}
   </section>
 
-  <section>
-    <h2>{$t('landing.how')}</h2>
-    <ol class="steps">
-      <li><b>1</b><span>{$t('landing.how1')}</span></li>
-      <li><b>2</b><span>{$t('landing.how2')}</span></li>
-      <li><b>3</b><span>{$t('landing.how3')}</span></li>
-      <li><b>4</b><span>{$t('landing.how4')}</span></li>
-    </ol>
-  </section>
-
-  <section class="trust">
-    <div class="tcard">📜 <b>{$t('charter.title')}</b><p>{$t('landing.t.charter')}</p><a href="#/charter">{$t('charter.link')} →</a></div>
-    <div class="tcard">⚖️ <b>{$t('landing.t.lictitle')}</b><p>{$t('landing.t.lic')}</p><a href="#/about">{$t('about.title')} →</a></div>
-    <div class="tcard">🔒 <b>{$t('landing.t.datatitle')}</b><p>{$t('landing.t.data')}</p><a href="#/about">{$t('about.title')} →</a></div>
+  <section class="trustline">
+    <span>📜 <a href="#/charter">{$t('charter.title')}</a></span>
+    <span>⚖️ {$t('landing.t.short.lic')}</span>
+    <span>🔒 {$t('landing.t.short.data')}</span>
+    <span>💛 {$t('landing.freenote')}</span>
   </section>
 
   <footer class="lfoot">
@@ -68,38 +54,30 @@
 </div>
 
 <style>
-  .land { max-width: 1020px; margin: 0 auto; padding: 18px 18px 40px; }
-  .lhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 14px; }
+  .land { max-width: 1020px; margin: 0 auto; padding: 18px 18px 30px; }
+  .lhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand span { display: flex; flex-direction: column; line-height: 1.15; }
   .brand b { font-size: 19px; } .brand small { font-size: 11.5px; color: var(--ink-dim); }
   .langsel { width: auto; padding: 7px 8px; font-weight: 700; }
-  .hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; align-items: center; padding: 26px 0 34px; }
+  .hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 30px; align-items: center; padding: 30px 0 34px; }
   .hero h1 { font-size: 34px; line-height: 1.15; margin-bottom: 12px; }
   .lead { font-size: 16.5px; line-height: 1.6; color: var(--ink-dim); }
-  .ticks { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 8px; }
+  .ticks { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-direction: column; gap: 9px; }
   .ticks li { padding-left: 26px; position: relative; line-height: 1.45; }
   .ticks li::before { content: '✓'; position: absolute; left: 0; color: var(--ok); font-weight: 900; }
   .login-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
-  section { margin: 26px 0; }
-  section h2 { margin-bottom: 14px; }
-  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px 0 26px; }
   .feat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
   .fi { font-size: 24px; display: block; margin-bottom: 6px; }
   .feat p { color: var(--ink-dim); font-size: 13px; line-height: 1.5; margin-top: 4px; }
-  .steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .steps li { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; font-size: 13.5px; }
-  .steps b { background: var(--accent); color: var(--accent-ink); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-  .trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .tcard { background: var(--soft); border-radius: 12px; padding: 14px; font-size: 13.5px; line-height: 1.5; }
-  .tcard p { color: var(--ink-dim); margin: 6px 0; }
-  .tcard a { font-weight: 700; }
-  .lfoot { border-top: 1px solid var(--border); margin-top: 34px; padding-top: 14px; font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.8; }
+  .trustline { display: flex; flex-wrap: wrap; gap: 8px 26px; justify-content: center; background: var(--soft); border-radius: 12px; padding: 12px 16px; font-size: 13px; color: var(--soft-ink); }
+  .trustline a { font-weight: 700; }
+  .lfoot { border-top: 1px solid var(--border); margin-top: 26px; padding-top: 14px; font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.8; }
   @media (max-width: 860px) {
-    .hero { grid-template-columns: 1fr; }
-    .feat-grid, .trust { grid-template-columns: 1fr 1fr; }
-    .steps { grid-template-columns: 1fr 1fr; }
+    .hero { grid-template-columns: 1fr; padding-top: 16px; }
+    .feat-grid { grid-template-columns: 1fr 1fr; }
     .hero h1 { font-size: 27px; }
   }
-  @media (max-width: 520px) { .feat-grid, .trust, .steps { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .feat-grid { grid-template-columns: 1fr; } }
 </style>
