@@ -54,36 +54,32 @@ export const AMBIANCES = {
   }
 };
 
-/* « Ho ho ho » du Père Noël : trois bouffées graves avec formant vocal (filtre passe-bande ~500 Hz) et souffle */
-function hohoho(t0 = 0) {
+/* Grelots de traîneau : secousses rythmées de clochettes (évoque le Père Noël sans voix synthétique) */
+function sleighBells(t0 = 0, shakes = 6) {
   const c = ac();
-  for (let i = 0; i < 3; i++) {
-    const t = c.currentTime + t0 + i * 0.34;
-    const o = c.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(95, t + 0.24);
-    const formant = c.createBiquadFilter(); formant.type = 'bandpass'; formant.frequency.value = 480; formant.Q.value = 1.1;
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.05);
-    g.gain.setValueAtTime(0.5, t + 0.16); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-    o.connect(formant).connect(lp).connect(g).connect(c.destination);
-    o.start(t); o.stop(t + 0.34);
-    // souffle du « h »
-    const n = c.createBufferSource(); const buf = c.createBuffer(1, c.sampleRate * 0.08, c.sampleRate);
-    const d = buf.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / d.length);
-    n.buffer = buf; const ng = c.createGain(); ng.gain.value = 0.06;
-    const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 0.7;
-    n.connect(nf).connect(ng).connect(c.destination); n.start(t - 0.02 > c.currentTime ? t - 0.02 : t);
+  for (let i = 0; i < shakes; i++) {
+    const t = c.currentTime + t0 + i * 0.19 + (i % 2) * 0.02;
+    // touffe de mini-clochettes : bruit filtré très aigu + partiels métalliques
+    const n = c.createBufferSource(); const dur = 0.09; const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+    const d = buf.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * Math.exp(-k / d.length * 6);
+    n.buffer = buf; const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 6600; f.Q.value = 1.2;
+    const g = c.createGain(); g.gain.value = 0.16;
+    n.connect(f).connect(g).connect(c.destination); n.start(t);
+    for (const pf of [4700, 6100, 7600]) {
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = pf * (0.98 + Math.random() * 0.04);
+      const og = c.createGain(); og.gain.setValueAtTime(0.03, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      o.connect(og).connect(c.destination); o.start(t); o.stop(t + 0.14);
+    }
   }
 }
 AMBIANCES.fetes = {
   name: { fr: 'Fêtes', en: 'Festive', de: 'Festtage' },
   // clochettes : sinus aigus courts avec harmonique, façon grelots
-  draw: () => { [1568, 1976].forEach((f, i) => { tone({ f, t: i * .07, d: .12, type: 'sine', g: .12 }); tone({ f: f * 2.5, t: i * .07, d: .06, type: 'sine', g: .04 }); }); },
+  draw: () => { if (Math.random() < 0.15) sleighBells(0, 3); [1568, 1976].forEach((f, i) => { tone({ f, t: i * .07, d: .12, type: 'sine', g: .12 }); tone({ f: f * 2.5, t: i * .07, d: .06, type: 'sine', g: .04 }); }); },
   reveal: () => [1319, 1568, 2093].forEach((f, i) => { tone({ f, t: i * .1, d: .25, type: 'sine', g: .12 }); tone({ f: f * 2.4, t: i * .1, d: .08, type: 'sine', g: .04 }); }),
   tick: () => tone({ f: 2093, d: .03, g: .05, type: 'sine' }),
-  bingo: () => { hohoho(0); [1319, 1568, 1760, 2093, 1760, 2093, 2637].forEach((f, i) => { tone({ f, t: 1.1 + i * .13, d: .22, type: 'sine', g: .13 }); tone({ f: f * 2.4, t: 1.1 + i * .13, d: .07, type: 'sine', g: .04 }); }); },
-  end: () => { [1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone({ f, t: i * .2, d: .5, type: 'sine', g: .12 })); hohoho(1.2); }
+  bingo: () => { sleighBells(0, 7); [1319, 1568, 1760, 2093, 1760, 2093, 2637].forEach((f, i) => { tone({ f, t: 1.35 + i * .13, d: .22, type: 'sine', g: .13 }); tone({ f: f * 2.4, t: 1.35 + i * .13, d: .07, type: 'sine', g: .04 }); }); },
+  end: () => { [1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone({ f, t: i * .2, d: .5, type: 'sine', g: .12 })); sleighBells(1.1, 8); }
 };
 
 export function play(ambiance, event) {
